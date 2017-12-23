@@ -1,0 +1,25 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /admin/
+  static_files: ../client/dist/index.html
+  upload: ../client/dist/index.html
+  login: admin
+- url: /static
+  static_dir: ../client/dist/static
+- url: /api/admin/.*
+  script: main.app
+  login: admin
+- url: /api/.*
+  script: main.app
+- url: /.*
+  static_files: ../client/dist/index.html
+  upload: ../client/dist/index.html
+
+automatic_scaling:
+  max_concurrent_requests: 24
+  max_idle_instances: 2
+  min_idle_instances: 0
+  min_pending_latency: 200ms

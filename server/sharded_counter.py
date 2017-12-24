@@ -3,15 +3,14 @@ import random
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
-SHARD_KEY_TEMPLATE = 'sharded-counter'
+from ndb_util import FancyModel
 
-
-class _CounterShard(ndb.Model):
+class _CounterShard(FancyModel):
     """Shards for each named counter."""
     count = ndb.IntegerProperty(default=0)
 
 
-class ShardedCounter(ndb.Model):
+class ShardedCounter(FancyModel):
     keys = ndb.KeyProperty(kind=_CounterShard, repeated=True)
 
     @classmethod
@@ -49,6 +48,14 @@ class ShardedCounter(ndb.Model):
         # Memcache increment does nothing if the name is not a key in memcache
         memcache.incr(self._get_memcache_key())
 
+    @ndb.transactional
+    def decrement(self):
+        shard = random.choice(self.keys).get()
+        shard.count -= 1
+        shard.put()
+        # Memcache increment does nothing if the name is not a key in memcache
+        memcache.decr(self._get_memcache_key())
+
     def _get_memcache_key(self):
-        return 'ShardedCounter-'.format(self.id())
+        return 'ShardedCounter-{}'.format(self.key.id())
 

@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+import Voting from '@/components/Voting'
 import Admin from '@/components/Admin'
 
 const NotFoundComponent = { template: `
@@ -20,8 +20,8 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld
+      name: 'Voting',
+      component: Voting
     },
     {
       path: '/admin/',

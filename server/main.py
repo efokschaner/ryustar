@@ -39,7 +39,10 @@ class CurrentLevel(FancyModel):
 
 def set_current_level(level):
     cur_level = CurrentLevel.get_singleton()
-    cur_level.level_key = level.key
+    if level is None:
+        cur_level.level_key = None
+    else:
+        cur_level.level_key = level.key
     cur_level.put()
 
 
@@ -48,6 +51,13 @@ def get_current_level():
     if cur_level_key is None:
         return None
     return cur_level_key.get()
+
+
+def finish_current_level():
+    cur_level = get_current_level()
+    if cur_level is not None:
+        cur_level.end_time = datetime.datetime.now()
+        cur_level.put()
 
 
 class UserVote(FancyModel):
@@ -87,6 +97,7 @@ def handle_get_config():
 
 @app.route('/api/admin/start-new-level', methods=['POST'])
 def handle_start_new_level():
+    finish_current_level()
     new_level = Level.create(request.form['name_ish'])
     set_current_level(new_level)
     return ('', 204)
@@ -94,9 +105,7 @@ def handle_start_new_level():
 
 @app.route('/api/admin/end-current-level', methods=['POST'])
 def handle_end_current_level():
-    cur_level = get_current_level()
-    if cur_level is not None:
-        cur_level.end_time = datetime.datetime.now()
+    finish_current_level()
     set_current_level(None)
     return ('', 204)
 

@@ -1,16 +1,17 @@
 <template>
   <div class="admin">
-    <div class="loading" v-if="loading">
-      Loading...
+    <form v-on:submit.prevent="startNewLevel">
+      <input v-model="newLevelNameIsh" type=text required="required" placeholder="Level Name (ish)">
+      <input type="submit" class="btn btn-default" value="Start New Level">
+    </form>
+    <form v-on:submit.prevent="endCurrentLevel">
+      <input type="submit" class="btn btn-default" value="End Current Level">
+    </form>
+    <div class="working" v-if="working">
+      Working...
     </div>
-
     <div v-if="error" class="error">
       {{ error }}
-    </div>
-
-    <div v-if="config" class="links">
-      <a :href="config.login_url">Login</a>
-      <a :href="config.logout_url">Logout</a>
     </div>
   </div>
 </template>
@@ -19,45 +20,60 @@
 export default {
   data () {
     return {
-      loading: false,
-      config: null,
-      error: null
+      working: false,
+      error: null,
+      newLevelNameIsh: ''
     }
   },
   created () {
-    // fetch the data when the view is created and the data is
-    // already being observed
-    this.fetchData()
-  },
-  watch: {
-    // call again the method if the route changes
-    '$route': 'fetchData'
+    return this.$store.dispatch('fetchCurrentLevel')
   },
   methods: {
-    fetchData () {
-      this.error = this.post = null
-      this.loading = true
-      fetch('/api/config')
-      .then(response => {
-        this.loading = false
+    async startNewLevel () {
+      this.error = null
+      this.working = true
+      let fetchBody = new URLSearchParams()
+      fetchBody.set('name_ish', this.newLevelNameIsh)
+      let fetchOptions = {
+        method: 'POST',
+        body: fetchBody,
+        credentials: 'same-origin'
+      }
+      try {
+        let response = await fetch('/api/admin/start-new-level', fetchOptions)
         if (!response.ok) {
-          throw new Error('Error from /api/config : ' + response.toString())
+          let errorText = await response.text()
+          throw new Error(`HTTP ${response.status} from /api/admin/start-new-level : ${errorText}`)
         }
-        return response.json()
-      })
-      .then(config => {
-        this.config = config
-      })
-      .catch(err => {
-        this.loading = false
+      } catch (err) {
         this.error = err.toString()
-      })
+      } finally {
+        this.working = false
+      }
+    },
+    async endCurrentLevel () {
+      this.error = null
+      this.working = true
+      let fetchOptions = {
+        method: 'POST',
+        credentials: 'same-origin'
+      }
+      try {
+        let response = await fetch('/api/admin/end-current-level', fetchOptions)
+        if (!response.ok) {
+          let errorText = await response.text()
+          throw new Error(`HTTP ${response.status} from /api/admin/start-new-level : ${errorText}`)
+        }
+      } catch (err) {
+        this.error = err.toString()
+      } finally {
+        this.working = false
+      }
     }
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 h1, h2 {
   font-weight: normal;

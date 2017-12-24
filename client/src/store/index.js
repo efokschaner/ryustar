@@ -25,35 +25,63 @@ function getUserId () {
 }
 
 let state = {
-  user_id: getUserId(),
-  current_level: null,
-  current_vote: null
+  userId: getUserId(),
+  currentLevel: null,
+  hasSetCurrentLevel: false,
+  currentVote: null
 }
 
 let getters = {
-  cartProducts: state => {
-    return state.cart.added.map(({ id, quantity }) => {
-      const product = state.products.all.find(p => p.id === id)
-      return {
-        title: product.title,
-        price: product.price,
-        quantity
-      }
-    })
+  noLevelInProgress: state => {
+    return state.hasSetCurrentLevel && !state.currentLevel
   }
 }
 
 let mutations = {
+  setCurrentLevel (state, newCurrentLevel) {
+    state.currentLevel = newCurrentLevel
+    state.hasSetCurrentLevel = true
+  },
+  setCurrentVote (state, newCurrentVote) {
+    state.newCurrentVote = newCurrentVote
+  }
+}
+
+let pendingCurrentLevelRequest = null
+function fetchCurrentLevel ({ commit }) {
+  if (pendingCurrentLevelRequest) {
+    return pendingCurrentLevelRequest
+  }
+  async function fetchCurrentLevelInternal () {
+    let response = await fetch('/api/level/current')
+    let newCurrentLevel = await response.json()
+    commit('setCurrentLevel', newCurrentLevel)
+    pendingCurrentLevelRequest = null
+    return newCurrentLevel
+  }
+  pendingCurrentLevelRequest = fetchCurrentLevelInternal()
+  return pendingCurrentLevelRequest
+}
+
+let pendingCurrentVoteRequest = null
+function fetchCurrentVote ({ commit, state }) {
+  if (pendingCurrentVoteRequest) {
+    return pendingCurrentVoteRequest
+  }
+  async function fetchCurrentVoteInternal () {
+    let response = await fetch('/api/vote/' + state.userId)
+    let newCurrentVote = await response.json()
+    commit('setCurrentVote', newCurrentVote)
+    pendingCurrentVoteRequest = null
+    return newCurrentVote
+  }
+  pendingCurrentVoteRequest = fetchCurrentVoteInternal()
+  return pendingCurrentVoteRequest
 }
 
 let actions = {
-  addToCart: ({ commit }, product) => {
-    if (product.inventory > 0) {
-      commit('types.ADD_TO_CART', {
-        id: product.id
-      })
-    }
-  }
+  fetchCurrentLevel,
+  fetchCurrentVote
 }
 
 let modules = {}

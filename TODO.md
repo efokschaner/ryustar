@@ -16,5 +16,7 @@
 - Star button
 - Garbage button
 
-## Dev efficiency
-Customize google-cloud-sdk/platform/google_appengine/google/appengine/tools/devappserver2/static_files_handler.py to allow serving of static files from a proxy.
+## Tech
+- Add captcha
+- Investigate whether storing absence of new user's vote is better than not finding in data store each time.
+- Gremlins test?

@@ -90,25 +90,6 @@ def get_current_vote(user_id):
 
 app = Flask(__name__)
 
-@app.before_request
-def redirect_non_www_and_non_https():
-    """Redirect requests from naked to www subdomain. And from http to https"""
-    if IS_PUBLIC_ENVIRONMENT:
-        needs_redirect = False
-        url = request.url
-        urlparts = urlparse(url)
-        new_urlparts = list(urlparts)
-        if urlparts.scheme == 'http':
-            new_urlparts[0] = 'https'
-            needs_redirect = True
-        if len(urlparts.netloc.split('.')) == 2:
-            # This is a naked domain so prefix with www.
-            new_urlparts[1] = 'www.' + urlparts.netloc
-            needs_redirect = True
-        if needs_redirect:
-            new_url = urlunparse(new_urlparts)
-            return redirect(new_url, code=301)
-
 
 @app.route('/api/config')
 def handle_get_config():

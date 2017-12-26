@@ -7,16 +7,26 @@ handlers:
   static_files: www/index.html
   upload: www/index.html
   login: admin
+  secure: always
+  redirect_http_response_code: 301
 - url: /static
   static_dir: www/static
+  secure: always
+  redirect_http_response_code: 301
 - url: /api/admin/.*
   script: main.app
   login: admin
+  secure: always
+  redirect_http_response_code: 301
 - url: /api/.*
   script: main.app
+  secure: always
+  redirect_http_response_code: 301
 - url: /.*
   static_files: www/index.html
   upload: www/index.html
+  secure: always
+  redirect_http_response_code: 301
 
 automatic_scaling:
   max_concurrent_requests: 24

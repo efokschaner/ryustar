@@ -19,13 +19,8 @@ yarn run dev
 ```
 
 ## Deployment
+Assuming gcloud (Google Cloud SDK) is installed and configured correctly
 ``` bash
-pushd server
-pip install -t lib -r requirements.txt
-popd
-pushd client
-yarn run build
-popd
-# ??????
-# PROFIT
-``` 
+./deploy.sh
+```
+There will be some prompts.

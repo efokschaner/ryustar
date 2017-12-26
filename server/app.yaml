@@ -3,20 +3,20 @@ api_version: 1
 threadsafe: true
 
 handlers:
-- url: /admin/
-  static_files: ../client/dist/index.html
-  upload: ../client/dist/index.html
+- url: /admin/?
+  static_files: www/index.html
+  upload: www/index.html
   login: admin
 - url: /static
-  static_dir: ../client/dist/static
+  static_dir: www/static
 - url: /api/admin/.*
   script: main.app
   login: admin
 - url: /api/.*
   script: main.app
 - url: /.*
-  static_files: ../client/dist/index.html
-  upload: ../client/dist/index.html
+  static_files: www/index.html
+  upload: www/index.html
 
 automatic_scaling:
   max_concurrent_requests: 24

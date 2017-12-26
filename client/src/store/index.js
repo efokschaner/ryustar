@@ -24,8 +24,16 @@ function getUserId () {
   return newId
 }
 
+async function fetchJson (url, fetchOptions) {
+  let response = await fetch(url, fetchOptions)
+  if (!response.ok) {
+    let errorText = await response.text()
+    throw new Error(`HTTP ${response.status} from ${response.url} : ${errorText}`)
+  }
+  return response.json()
+}
+
 let state = {
-  userId: getUserId(),
   currentLevel: null,
   hasSetCurrentLevel: false,
   currentVote: null
@@ -42,8 +50,15 @@ let mutations = {
     state.currentLevel = newCurrentLevel
     state.hasSetCurrentLevel = true
   },
+  applyPredicitonToCurrentLevel (state, {oldChoice, newChoice}) {
+    state.currentLevel[newChoice + '_votes_count'] += 1
+    let oldKey = oldChoice + '_votes_count'
+    if (oldKey in state.currentLevel) {
+      state.currentLevel[oldKey] -= 1
+    }
+  },
   setCurrentVote (state, newCurrentVote) {
-    state.newCurrentVote = newCurrentVote
+    state.currentVote = newCurrentVote
   }
 }
 
@@ -53,8 +68,7 @@ function fetchCurrentLevel ({ commit }) {
     return pendingCurrentLevelRequest
   }
   async function fetchCurrentLevelInternal () {
-    let response = await fetch('/api/level/current')
-    let newCurrentLevel = await response.json()
+    let newCurrentLevel = await fetchJson('/api/level/current')
     commit('setCurrentLevel', newCurrentLevel)
     pendingCurrentLevelRequest = null
     return newCurrentLevel
@@ -69,8 +83,7 @@ function fetchCurrentVote ({ commit, state }) {
     return pendingCurrentVoteRequest
   }
   async function fetchCurrentVoteInternal () {
-    let response = await fetch('/api/vote/' + state.userId)
-    let newCurrentVote = await response.json()
+    let newCurrentVote = await fetchJson('/api/vote/' + getUserId())
     commit('setCurrentVote', newCurrentVote)
     pendingCurrentVoteRequest = null
     return newCurrentVote
@@ -79,9 +92,31 @@ function fetchCurrentVote ({ commit, state }) {
   return pendingCurrentVoteRequest
 }
 
+async function performVote ({ commit, state }, choice) {
+  let priorVoteChoice = null
+  if (state.currentVote) {
+    priorVoteChoice = state.currentVote.choice
+  }
+  let fetchBody = new URLSearchParams()
+  fetchBody.set('user_id', getUserId())
+  fetchBody.set('choice', choice)
+  fetchBody.set('level_key', state.currentLevel.key)
+  let fetchOptions = {
+    method: 'POST',
+    body: fetchBody
+  }
+  let newCurrentVote = await fetchJson('/api/vote', fetchOptions)
+  commit('setCurrentVote', newCurrentVote)
+  commit('applyPredicitonToCurrentLevel', {
+    oldChoice: priorVoteChoice,
+    newChoice: choice
+  })
+}
+
 let actions = {
   fetchCurrentLevel,
-  fetchCurrentVote
+  fetchCurrentVote,
+  performVote
 }
 
 let modules = {}

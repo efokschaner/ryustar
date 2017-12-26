@@ -22,4 +22,4 @@ automatic_scaling:
   max_concurrent_requests: 24
   max_idle_instances: 2
   min_idle_instances: 0
-  min_pending_latency: 200ms
+  min_pending_latency: 400ms

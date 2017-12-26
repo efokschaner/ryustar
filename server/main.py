@@ -10,7 +10,7 @@ from google.appengine.ext import ndb
 from ndb_util import FancyModel
 from sharded_counter import ShardedCounter
 
-IS_PUBLIC_ENVIRONMENT = os.environ.get('SERVER_NAME', '').startswith('Google App Engine')
+IS_PUBLIC_ENVIRONMENT = os.environ.get('SERVER_SOFTWARE', '').startswith('Google App Engine')
 
 class Level(FancyModel):
     name_ish = ndb.StringProperty(required=True)
@@ -118,21 +118,6 @@ def handle_get_config():
     })
 
 
-@app.route('/api/admin/start-new-level', methods=['POST'])
-def handle_start_new_level():
-    finish_current_level()
-    new_level = Level.create(request.form['name_ish'])
-    set_current_level(new_level)
-    return ('', 204)
-
-
-@app.route('/api/admin/end-current-level', methods=['POST'])
-def handle_end_current_level():
-    finish_current_level()
-    set_current_level(None)
-    return ('', 204)
-
-
 @app.route('/api/level/current')
 def handle_get_current_level():
     cur_level = get_current_level()
@@ -201,7 +186,32 @@ def handle_vote():
             cur_level.garbage_votes_counter_key.get().decrement()
         return handle_get_current_vote(user_id)
     return commit_vote()
-    
+
+
+@app.route('/api/admin/start-new-level', methods=['POST'])
+def handle_start_new_level():
+    finish_current_level()
+    new_level = Level.create(request.form['name_ish'])
+    set_current_level(new_level)
+    return ('', 204)
+
+
+@app.route('/api/admin/end-current-level', methods=['POST'])
+def handle_end_current_level():
+    finish_current_level()
+    set_current_level(None)
+    return ('', 204)
+
+
+@app.route('/api/admin/environ')
+def handle_get_environ():
+    def _sanitize(val):
+        if isinstance(val, basestring):
+            return val
+        else:
+            return repr(val)
+    return jsonify({k:_sanitize(v) for k,v in os.environ.items()})
+
 
 @app.errorhandler(500)
 def server_error(e):

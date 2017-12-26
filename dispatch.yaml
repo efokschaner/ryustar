@@ -1,0 +1,5 @@
+dispatch:
+  - url: "ryustar.io/*"
+    service: www-redirect
+  - url: "studious-osprey-189923.appspot.com/*"
+    service: www-redirect

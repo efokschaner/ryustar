@@ -8,7 +8,7 @@ pushd client
 yarn install
 yarn run build
 popd
-pushd server
-pip install -t lib/ -r requirements.txt
-popd
+pip install -t server/lib -r server/requirements.txt
 gcloud app deploy server/app.yaml
+gcloud app deploy www-redirect-service/app.yaml
+gcloud app deploy dispatch.yaml

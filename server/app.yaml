@@ -30,6 +30,7 @@ handlers:
 
 automatic_scaling:
   max_concurrent_requests: 24
-  max_idle_instances: 2
   min_idle_instances: 0
+  max_idle_instances: 1
   min_pending_latency: 1000ms
+  max_pending_latency: 5000ms

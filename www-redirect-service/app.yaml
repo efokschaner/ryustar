@@ -1,0 +1,17 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+service: www-redirect
+
+handlers:
+- url: /.*
+  script: main.app
+  secure: always
+  redirect_http_response_code: 301
+
+automatic_scaling:
+  min_idle_instances: 0
+  max_idle_instances: 1
+  min_pending_latency: 500ms
+  max_pending_latency: 2000ms
+  max_concurrent_requests: 80

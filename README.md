@@ -6,9 +6,8 @@ Built using Google App Engine and Flask and Vue
 
 ### Server
 ``` bash
-cd server
-pip install -t lib -r requirements.txt
-dev_appserver.py app.yaml
+pip install -t server/lib -r server/requirements.txt
+./dev_server.sh
 ```
 
 ### Client

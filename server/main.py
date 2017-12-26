@@ -184,6 +184,12 @@ def handle_end_current_level():
     return ('', 204)
 
 
+@app.route('/api/admin/update-current-level-counts', methods=['POST'])
+def handle_update_current_level_counts():
+    # TODO implement and figure out how to trigger periodically
+    return ('', 200)
+
+
 @app.route('/api/admin/environ')
 def handle_get_environ():
     def _sanitize(val):

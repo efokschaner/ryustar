@@ -20,3 +20,4 @@
 - Add captcha
 - Investigate whether storing absence of new user's vote is better than not finding in data store each time.
 - Gremlins test?
+- Make the container ingress IP static https://cloud.google.com/kubernetes-engine/docs/tutorials/http-balancer#step_5_optional_configuring_a_static_ip_address

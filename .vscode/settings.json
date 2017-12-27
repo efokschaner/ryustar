@@ -1,0 +1,7 @@
+{
+    "eslint.packageManager": "yarn",
+    "eslint.workingDirectories": [
+      "client",
+      "websocket-service"
+    ]
+}

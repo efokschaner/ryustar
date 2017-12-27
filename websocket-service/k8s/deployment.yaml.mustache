@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ryustar-websocket-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ryustar-websocket-service-app
+  template:
+    metadata:
+      name: ryustar-websocket-service-pod-template
+      labels:
+        app: ryustar-websocket-service-app
+    spec:
+      containers:
+      - name: ryustar-websocket-service
+        image: {{ CONTAINER_IMAGE }}
+        ports:
+        - containerPort: 9090

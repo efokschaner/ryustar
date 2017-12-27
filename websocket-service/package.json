@@ -1,0 +1,20 @@
+{
+  "name": "ryustar-websocket-service",
+  "version": "1.0.0",
+  "description": "Websocket service for RyuStar",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "websocket": "^1.0.25"
+  },
+  "devDependencies": {
+    "eslint": "^4.14.0",
+    "eslint-config-standard": "^11.0.0-beta.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "mustache": "^2.3.0"
+  }
+}

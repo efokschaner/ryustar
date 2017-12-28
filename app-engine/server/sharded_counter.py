@@ -16,17 +16,17 @@ class ShardedCounter(FancyModel):
     @classmethod
     def create(cls, num_shards):
         counter = cls()
-        counter.increase_shards(num_shards)
+        counter.increase_total_shards(num_shards)
         counter.put()
         return counter
 
-    def increase_shards(self, num_shards):
+    def increase_total_shards(self, num_total_shards):
         while len(self.keys) < num_shards:
             shard = _CounterShard()
             shard_key = shard.put()
             self.keys.append(shard_key)
         self.put()
-        
+
     def get_count_fast(self):
         total = memcache.get(self._get_memcache_key())
         if total is None:

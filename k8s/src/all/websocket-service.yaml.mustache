@@ -4,7 +4,7 @@ metadata:
   name: websocket-service
 spec:
   ports:
-  - port: 9091
-    targetPort: 9090
+  - port: {{ websocket-service-pod-listen-port }}
+    targetPort: {{ websocket-service-container-listen-port }}
   selector:
     app: ryustar-websocket-service-app

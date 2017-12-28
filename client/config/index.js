@@ -53,10 +53,10 @@ module.exports = {
 
   build: {
     // Template for index.html
-    index: path.resolve(__dirname, '../../server/www/index.html'),
+    index: path.resolve(__dirname, '../../app-engine/server/www/index.html'),
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../../server/www'),
+    assetsRoot: path.resolve(__dirname, '../../app-engine/server/www'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
 

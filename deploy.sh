@@ -7,15 +7,28 @@ set -o verbose
 git clean -f -d -X
 
 # Builds
+k8s/build.sh
+
 pushd client
 yarn install
 yarn run build
 popd
 
-pip install -t server/lib -r server/requirements.txt
+pip install -t app-engine/server/lib -r app-engine/server/requirements.txt
 
-# Deploys (technically should move build steps out of websocket-service/deploy.sh)
-websocket-service/deploy.sh
-gcloud app deploy server/app.yaml
-gcloud app deploy www-redirect-service/app.yaml
-gcloud app deploy dispatch.yaml
+WEBSOCKET_CONTAINER_IMAGE=$(jq '(.base + .gcloud)."websocket-service-container-image"' global-config.json)
+WEBSOCKET_CONTAINER_LISTEN_PORT=$(jq '(.base + .gcloud)."websocket-service-container-listen-port"' global-config.json)
+
+pushd websocket-service
+eval $(minikube docker-env)
+docker build -t ${WEBSOCKET_CONTAINER_IMAGE} . --build-arg LISTEN_PORT=${WEBSOCKET_CONTAINER_LISTEN_PORT}
+popd
+
+
+# Deploys
+
+gcloud docker -- push ${WEBSOCKET_CONTAINER_IMAGE}
+
+gcloud app deploy app-engine/server/app.yaml
+gcloud app deploy app-engine/www-redirect-service/app.yaml
+gcloud app deploy app-engine/dispatch.yaml

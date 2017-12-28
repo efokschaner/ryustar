@@ -1,0 +1,11 @@
+{
+  "name": "rustar-k8s-build",
+  "version": "1.0.0",
+  "description": "Just some build deps",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "mustache": "^2.3.0"
+  }
+}

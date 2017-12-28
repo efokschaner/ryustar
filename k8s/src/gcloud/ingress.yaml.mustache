@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ryustar-ingress
+  annotations:
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "gce"
+spec:
+  backend:
+    serviceName: websocket-service
+    servicePort: {{ websocket-service-pod-listen-port }}
+  # todo https://danrl.com/blog/2017/google-kubernetes-engine-and-lets-encrypt/
+  # tls:
+  # - hosts:
+  #   - test.danrl.com
+  #     secretName: test-danrl-com-certificate

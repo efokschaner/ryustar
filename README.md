@@ -1,12 +1,59 @@
-# Ryustar
+# RyuStar
 
-Built using Google App Engine and Flask and Vue
+The code for https://www.ryustar.io
+
+Built using Google App Engine, Google Container Engine, Flask, Vue.js
 
 ## Development
 
-### Server
+#### Prerequisites
+- minikube [See below for general guidance on minikube setup.](#setting-up-minikube)
+- jq [(get jq)](https://stedolan.github.io/jq/download/)
 
-You'll need minikube to run local containers: https://github.com/kubernetes/minikube and https://kubernetes.io/docs/getting-started-guides/minikube/
+### Server
+Assuming you have a minikube cluster running, do the following:
+- Add entries for `ryustar.invalid` and `ws.ryustar.invalid` to your hosts file using your minikube ip, which you can get with `minikube ip`. eg.
+
+      192.168.64.6 ryustar.invalid ws.ryustar.invalid
+
+  You'll need to update this each time your minikube ip changes (eg. on restart)
+- Enable the ingress addon:
+
+      minikube addons enable ingress
+
+Finally to run services:
+``` bash
+./dev_server.sh
+```
+
+### Client
+
+This runs webpack dev server on your local machine.
+Service calls are routed to the `ryustar.invalid` domain by the webpack proxy rules.
+
+In principle you could change the proxy to point to the production backend and bypass all the local server setup.
+
+``` bash
+cd client
+yarn install
+yarn run dev
+```
+
+## Deployment
+#### Prerequisites
+- `gcloud` (Google Cloud SDK) is installed and configured correctly
+- `kubectl` is installed. You can get it via `gcloud components install kubectl`
+``` bash
+./deploy.sh
+```
+There will be some prompts.
+
+## Appendix
+
+### Setting up minikube
+You'll need minikube to run a local container cluster.
+
+Installing minikube: https://github.com/kubernetes/minikube and https://kubernetes.io/docs/getting-started-guides/minikube/
 
 minikube may need hyperkit or some other driver: https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#hyperkit-driver
 
@@ -17,34 +64,6 @@ If using non-default (virtualbox) driver:
 
 You'll also need Docker for your platform: https://store.docker.com/
 
-You must have minikube already running:
+Get minikube up and running to use the rest of this readme:
 
     minikube start
-
-And you must enable the ingress addon:
-
-    minikube addons enable ingress
-
-`pip install` only needed on first run or if you change deps
-
-    pip install -t server/lib -r server/requirements.txt
-
-Finally to run services:
-``` bash
-./dev_server.sh
-```
-
-### Client
-``` bash
-cd client
-yarn install
-yarn run dev
-```
-
-## Deployment
-Assuming `gcloud` (Google Cloud SDK) is installed and configured correctly
-If you don't have gcloud kubectl: `gcloud components install kubectl`
-``` bash
-./deploy.sh
-```
-There will be some prompts.

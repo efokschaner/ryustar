@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: ryustar-websocket-service
-        image: {{ CONTAINER_IMAGE }}
+        image: {{ websocket-service-container-image }}
         ports:
-        - containerPort: 9090
+        - containerPort: {{ websocket-service-container-listen-port }}

@@ -1,0 +1,12 @@
+{
+  "base": {
+    "websocket-service-container-listen-port": 9090,
+    "websocket-service-pod-listen-port": 9091
+  },
+  "minikube": {
+    "websocket-service-container-image": "websocket-service:latest"
+  },
+  "gcloud": {
+    "websocket-service-container-image": "gcr.io/$(gcloud config get-value project -q)/websocket-service:latest"
+  }
+}

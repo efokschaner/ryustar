@@ -8,6 +8,25 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: 3600
     nginx.ingress.kubernetes.io/proxy-send-timeout: 3600
 spec:
-  backend:
-    serviceName: websocket-service
-    servicePort: {{ websocket-service-pod-listen-port }}
+  rules:
+  - host: www.ryustar.invalid
+    http:
+      paths:
+      - path:
+        backend:
+          serviceName: dev-appserver-service
+          servicePort: 8078
+  - host: gae-admin.ryustar.invalid
+    http:
+      paths:
+      - path:
+        backend:
+          serviceName: dev-appserver-service
+          servicePort: 8077
+  - host: ws.ryustar.invalid
+    http:
+      paths:
+      - path:
+        backend:
+          serviceName: websocket-service
+          servicePort: {{ websocket-service-pod-listen-port }}

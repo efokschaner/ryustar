@@ -12,14 +12,25 @@ Built using Google App Engine, Google Container Engine, Flask, Vue.js
 
 ### Server
 Assuming you have a minikube cluster running, do the following:
-- Add entries for `ryustar.invalid` and `ws.ryustar.invalid` to your hosts file using your minikube ip, which you can get with `minikube ip`. eg.
+- Add entries for:
+  - `www.ryustar.invalid`
+  - `ws.ryustar.invalid`
+  - `gae-admin.ryustar.invalid`
 
-      192.168.64.6 ryustar.invalid ws.ryustar.invalid
+  to your hosts file using your minikube ip, which you can get with `minikube ip`. eg.
+
+      192.168.64.6 www.ryustar.invalid ws.ryustar.invalid gae-admin.ryustar.invalid
 
   You'll need to update this each time your minikube ip changes (eg. on restart)
 - Enable the ingress addon:
 
       minikube addons enable ingress
+
+- In a separate terminal, mount the app-engine code into minikube vm:
+
+      minikube mount --ip 192.168.64.1 app-engine:/app-engine-src-host
+      # Note im using this --ip param to work around https://github.com/kubernetes/minikube/issues/2269
+
 
 Finally to run services:
 ``` bash

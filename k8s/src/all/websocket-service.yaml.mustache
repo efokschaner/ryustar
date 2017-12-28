@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,3 +9,24 @@ spec:
     targetPort: {{ websocket-service-container-listen-port }}
   selector:
     app: ryustar-websocket-service-app
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ryustar-websocket-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ryustar-websocket-service-app
+  template:
+    metadata:
+      name: ryustar-websocket-service-pod-template
+      labels:
+        app: ryustar-websocket-service-app
+    spec:
+      containers:
+      - name: ryustar-websocket-service
+        image: {{ websocket-service-container-image }}
+        ports:
+        - containerPort: {{ websocket-service-container-listen-port }}

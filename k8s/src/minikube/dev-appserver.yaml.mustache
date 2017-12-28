@@ -1,3 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dev-appserver-service
+spec:
+  ports:
+  - name: site
+    port: 8081
+    targetPort: 8080
+  - name: admin
+    port: 8071
+    targetPort: 8070
+  - name: api
+    port: 8061
+    targetPort: 8060
+  selector:
+    app: dev-appserver-app
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -25,11 +44,14 @@ spec:
         - --host=0.0.0.0
         - --port=8080
         - --admin_host=0.0.0.0
-        - --admin_port=8079
+        - --admin_port=8070
+        - --api_host=0.0.0.0
+        - --api_port=8060
         - --enable_host_checking=false
         - --use_mtime_file_watcher
         ports:
-        - containerPort: 8079
+        - containerPort: 8060
+        - containerPort: 8070
         - containerPort: 8080
         volumeMounts:
         - mountPath: /app-engine-src-container
@@ -41,18 +63,3 @@ spec:
           path: /app-engine-src-host
           # this field is optional
           type: Directory
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dev-appserver-service
-spec:
-  ports:
-  - name: admin
-    port: 8077
-    targetPort: 8079
-  - name: site
-    port: 8078
-    targetPort: 8080
-  selector:
-    app: dev-appserver-app

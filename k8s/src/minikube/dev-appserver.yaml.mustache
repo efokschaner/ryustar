@@ -32,17 +32,6 @@ spec:
       labels:
         app: dev-appserver-app
     spec:
-      # OUTDATED As we're now using Origin header rewrite in nginx conf in ingress.yaml
-      # Preserved for a bit in case that doesnt work out as this attempt was not commited.
-      #
-      # To work around pretty strict origin header checking in dev_appserver xhr handling
-      # combined with tight coupling of origin to its --admin_host, --admin_port params
-      # we use hostAliases + command line params to get the container to understand it's
-      # serving gae-admin.ryustar.invalid on port 80
-      # hostAliases:
-      # - ip: 0.0.0.0
-      #   hostnames:
-      #   - gae-admin.ryustar.invalid
       containers:
       - name: dev-appserver-container
         image: google/cloud-sdk:latest

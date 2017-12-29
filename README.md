@@ -36,11 +36,12 @@ Finally to run services:
 ``` bash
 ./dev_server.sh
 ```
+Now try http://www.ryustar.invalid/ and http://gae-admin.ryustar.invalid/ in a browser.
 
 ### Client
 
 This runs webpack dev server on your local machine.
-Service calls are routed to the `ryustar.invalid` domain by the webpack proxy rules.
+Service calls are routed to the `www.ryustar.invalid` domain by the webpack proxy rules.
 
 In principle you could change the proxy to point to the production backend and bypass all the local server setup.
 

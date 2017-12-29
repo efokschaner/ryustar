@@ -5,7 +5,7 @@ metadata:
   name: websocket-service
 spec:
   ports:
-  - port: {{ websocket-service-pod-listen-port }}
+  - port: {{ websocket-service-service-listen-port }}
     targetPort: {{ websocket-service-container-listen-port }}
   selector:
     app: ryustar-websocket-service-app
@@ -28,5 +28,8 @@ spec:
       containers:
       - name: ryustar-websocket-service
         image: {{ websocket-service-container-image }}
+        env:
+        - name: LISTEN_PORT
+          value: "{{ websocket-service-container-listen-port }}"
         ports:
         - containerPort: {{ websocket-service-container-listen-port }}

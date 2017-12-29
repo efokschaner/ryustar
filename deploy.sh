@@ -17,18 +17,16 @@ popd
 pip install -t app-engine/server/lib -r app-engine/server/requirements.txt
 
 WEBSOCKET_CONTAINER_IMAGE=$(jq '(.base + .gcloud)."websocket-service-container-image"' global-config.json)
-WEBSOCKET_CONTAINER_LISTEN_PORT=$(jq '(.base + .gcloud)."websocket-service-container-listen-port"' global-config.json)
-
-pushd websocket-service
 eval $(minikube docker-env)
-docker build -t ${WEBSOCKET_CONTAINER_IMAGE} . --build-arg LISTEN_PORT=${WEBSOCKET_CONTAINER_LISTEN_PORT}
-popd
-
+docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 
 # Deploys
 
 gcloud docker -- push ${WEBSOCKET_CONTAINER_IMAGE}
 
+gcloud app deploy app-engine/server/queue.yaml
+
 gcloud app deploy app-engine/server/app.yaml
 gcloud app deploy app-engine/www-redirect-service/app.yaml
+
 gcloud app deploy app-engine/dispatch.yaml

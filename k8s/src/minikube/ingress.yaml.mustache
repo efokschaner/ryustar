@@ -7,6 +7,15 @@ metadata:
     # Increase these for websockets
     nginx.ingress.kubernetes.io/proxy-read-timeout: 3600
     nginx.ingress.kubernetes.io/proxy-send-timeout: 3600
+    # To work around pretty strict origin header checking in dev_appserver xhr handling
+    # combined with tight coupling of origin to its --admin_host, --admin_port params
+    # Strip origin header for gae-admin.ryustar.invalid so it doesn't bother checking
+    ingress.kubernetes.io/configuration-snippet: |
+      set $new_origin $http_origin;
+      if ($host = "gae-admin.ryustar.invalid") {
+        set $new_origin "";
+      }
+      proxy_set_header Origin $new_origin;
 spec:
   rules:
   - host: www.ryustar.invalid
@@ -15,18 +24,18 @@ spec:
       - path:
         backend:
           serviceName: dev-appserver-service
-          servicePort: 8080
+          servicePort: 8081
   - host: gae-admin.ryustar.invalid
     http:
       paths:
       - path:
         backend:
           serviceName: dev-appserver-service
-          servicePort: 8070
+          servicePort: 8071
   - host: ws.ryustar.invalid
     http:
       paths:
       - path:
         backend:
           serviceName: websocket-service
-          servicePort: {{ websocket-service-pod-listen-port }}
+          servicePort: {{ websocket-service-service-listen-port }}

@@ -1,10 +1,8 @@
 FROM node:carbon-alpine
 
-ARG LISTEN_PORT
-ENV LISTEN_PORT=${LISTEN_PORT}
-
 WORKDIR /usr/src/app
 COPY package.json yarn.lock index.js ./
 RUN yarn install --prod && yarn cache clean
 
-ENTRYPOINT node index.js $LISTEN_PORT
+# Use json form so that node is pid 1 and can handle sigterm
+ENTRYPOINT ["node", "index.js"]

@@ -2,7 +2,8 @@ let WebSocketServer = require('websocket').server
 let http = require('http')
 
 function main () {
-  let port = parseInt(process.argv[2])
+  let portString = process.argv[2] || process.env.LISTEN_PORT || '9090'
+  let port = parseInt(portString)
   let server = http.createServer(function (request, response) {
     console.log((new Date()) + ' Received request for ' + request.url)
     response.writeHead(404)

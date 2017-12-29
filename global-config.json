@@ -1,7 +1,7 @@
 {
   "base": {
     "websocket-service-container-listen-port": 9090,
-    "websocket-service-pod-listen-port": 9091
+    "websocket-service-service-listen-port": 9091
   },
   "minikube": {
     "websocket-service-container-image": "websocket-service:local-dev"

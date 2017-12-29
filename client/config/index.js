@@ -10,10 +10,13 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {
-      '/api': 'http://www.ryustar.invalid',
-      '/_ah': 'http://www.ryustar.invalid'
-    },
+    proxyTable: [
+      {
+        context: ['/api/**', '/_ah/**'],
+        target: 'http://www.ryustar.invalid',
+        changeOrigin: true
+      }
+    ],
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST

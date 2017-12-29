@@ -17,7 +17,6 @@ popd
 pip install -t app-engine/server/lib -r app-engine/server/requirements.txt
 
 WEBSOCKET_CONTAINER_IMAGE=$(jq '(.base + .gcloud)."websocket-service-container-image"' global-config.json)
-eval $(minikube docker-env)
 docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 
 # Deploys

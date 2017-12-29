@@ -21,7 +21,7 @@ class ShardedCounter(FancyModel):
         return counter
 
     def increase_total_shards(self, num_total_shards):
-        while len(self.keys) < num_shards:
+        while len(self.keys) < num_total_shards:
             shard = _CounterShard()
             shard_key = shard.put()
             self.keys.append(shard_key)
@@ -53,7 +53,7 @@ class ShardedCounter(FancyModel):
         shard = random.choice(self.keys).get()
         shard.count -= 1
         shard.put()
-        # Memcache increment does nothing if the name is not a key in memcache
+        # Memcache decrement does nothing if the name is not a key in memcache
         memcache.decr(self._get_memcache_key())
 
     def _get_memcache_key(self):

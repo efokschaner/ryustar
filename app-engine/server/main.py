@@ -4,11 +4,12 @@ import os
 from urlparse import urlparse, urlunparse
 
 from flask import Flask, jsonify, request
-from google.appengine.api import users
+from google.appengine.api import users, taskqueue
 from google.appengine.ext import ndb
 
 from ndb_util import FancyModel
 from sharded_counter import ShardedCounter
+from unique_tasks import add_task_once_in_current_interval
 
 IS_PUBLIC_ENVIRONMENT = os.environ.get('SERVER_SOFTWARE', '').startswith('Google App Engine')
 
@@ -17,9 +18,7 @@ class Level(FancyModel):
     start_time = ndb.DateTimeProperty(auto_now_add=True)
     end_time = ndb.DateTimeProperty()
     star_votes_counter_key = ndb.KeyProperty(kind=ShardedCounter)
-    star_votes_final_count = ndb.IntegerProperty()
     garbage_votes_counter_key = ndb.KeyProperty(kind=ShardedCounter)
-    garbage_votes_final_count = ndb.IntegerProperty()
 
     @classmethod
     def create(cls, name_ish):
@@ -31,6 +30,25 @@ class Level(FancyModel):
         level.name_ish = name_ish
         level.put()
         return level
+
+    def _to_client_model_shared(self):
+        excludes = [
+            'star_votes_counter_key',
+            'garbage_votes_counter_key'
+        ]
+        return self.to_dict(exclude=excludes)
+
+    def to_client_model_fast(self):
+        level_dict = self._to_client_model_shared()
+        level_dict['star_votes_count'] = self.star_votes_counter_key.get().get_count_fast()
+        level_dict['garbage_votes_count'] = self.garbage_votes_counter_key.get().get_count_fast()
+        return level_dict
+
+    def to_client_model_exact(self):
+        level_dict = self._to_client_model_shared()
+        level_dict['star_votes_count'] = self.star_votes_counter_key.get().get_count_exact()
+        level_dict['garbage_votes_count'] = self.garbage_votes_counter_key.get().get_count_exact()
+        return level_dict
 
 
 class CurrentLevel(FancyModel):
@@ -104,15 +122,7 @@ def handle_get_current_level():
     cur_level = get_current_level()
     if cur_level is None:
         return jsonify(None)
-    excludes = [
-        'star_votes_counter_key',
-        'garbage_votes_counter_key'
-    ]
-    cur_level_dict = cur_level.to_dict(exclude=excludes)
-    cur_level_dict['star_votes_count'] = cur_level.star_votes_counter_key.get().get_count_fast()
-    cur_level_dict['garbage_votes_count'] = cur_level.garbage_votes_counter_key.get().get_count_fast()
-    cur_level_dict['key'] = cur_level.key.urlsafe()
-    return jsonify(cur_level_dict)
+    return jsonify(cur_level.to_client_model_fast())
 
 
 @app.route('/api/vote/<user_id>')
@@ -123,8 +133,52 @@ def handle_get_current_vote(user_id):
     return jsonify(cur_vote)
 
 
+class CommitVoteResult(object):
+    def __init__(self, flask_response, counts_need_update=False):
+        self.flask_response = flask_response
+        self.counts_need_update = counts_need_update
+
+
+@ndb.transactional(xg=True)
+def commit_vote(user_id, choice, level_key):
+    # confirm level id is current
+    cur_level = get_current_level()
+    if cur_level is None:
+        return CommitVoteResult(('No current level to vote on', 400))
+    if cur_level.key != level_key:
+        return CommitVoteResult((
+            'Cannot vote on level {} as it is not the current level ({})'.format(
+                level_key.urlsafe(),
+                cur_level.key.urlsafe()),
+            400))
+    prior_vote = get_current_vote(user_id)
+    if prior_vote is not None:
+        prior_vote_choice = prior_vote.choice
+        if prior_vote_choice == choice:
+            return CommitVoteResult(jsonify(prior_vote.to_dict()))
+        new_vote = prior_vote
+    else:
+        prior_vote_choice = None
+        new_vote = UserVote.create(user_id, level_key)
+    new_vote.choice = choice
+    new_vote.put()
+    if choice == 'star':
+        cur_level.star_votes_counter_key.get().increment()
+    elif choice == 'garbage':
+        cur_level.garbage_votes_counter_key.get().increment()
+    else:
+        raise AssertionError('Should not be possible to reach here with invalid choice {}'.format(choice))
+    if prior_vote_choice == 'star':
+        cur_level.star_votes_counter_key.get().decrement()
+    elif prior_vote_choice == 'garbage':
+        cur_level.garbage_votes_counter_key.get().decrement()
+    counts_need_update = True
+    return CommitVoteResult(handle_get_current_vote(user_id), True)
+
+
 @app.route('/api/vote', methods=['POST'])
 def handle_vote():
+    logging.debug('DOING THE OTHER THING')
     user_id = request.form['user_id']
     if not user_id:
         return 'Missing user_id', 400
@@ -135,38 +189,22 @@ def handle_vote():
     if not urlsafe_level_key:
         return 'Missing level_key', 400
     level_key = ndb.Key(urlsafe=urlsafe_level_key)
-
-    @ndb.transactional(xg=True)
-    def commit_vote():
-        # confirm level id is current
-        cur_level = get_current_level()
-        if cur_level is None:
-            return 'No current level to vote on', 400
-        if cur_level.key != level_key:
-            return 'Cannot vote on level {} as it is not the current level ({})'.format(level_key.urlsafe(), cur_level.key.urlsafe()), 400
-        prior_vote = get_current_vote(user_id)
-        if prior_vote is not None:
-            prior_vote_choice = prior_vote.choice
-            if prior_vote_choice == choice:
-                return jsonify(prior_vote.to_dict())
-            new_vote = prior_vote
-        else:
-            prior_vote_choice = None
-            new_vote = UserVote.create(user_id, level_key)
-        new_vote.choice = choice
-        new_vote.put()
-        if choice == 'star':
-            cur_level.star_votes_counter_key.get().increment()
-        elif choice == 'garbage':
-            cur_level.garbage_votes_counter_key.get().increment()
-        else:
-            raise AssertionError('Should not be possible to reach here with invalid choice {}'.format(choice))
-        if prior_vote_choice == 'star':
-            cur_level.star_votes_counter_key.get().decrement()
-        elif prior_vote_choice == 'garbage':
-            cur_level.garbage_votes_counter_key.get().decrement()
-        return handle_get_current_vote(user_id)
-    return commit_vote()
+    commit_vote_result = commit_vote(user_id, choice, level_key)
+    if commit_vote_result.counts_need_update:
+        try:
+            refresh_interval_seconds = 5
+            add_task_once_in_current_interval(
+                base_name = 'update-and-broadcast-level-counts-task',
+                interval_seconds = refresh_interval_seconds,
+                queue_name = 'update-and-broadcast-level-counts-queue',
+                url = '/api/admin/update-and-broadcast-level-counts',
+                params = {'level_key': urlsafe_level_key},
+                eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=refresh_interval_seconds)
+            )
+        except Exception:
+            # Caller doesn't need to know what went wrong in here:
+            logging.exception('Error while adding update count task')
+    return commit_vote_result.flask_response
 
 
 @app.route('/api/admin/start-new-level', methods=['POST'])
@@ -184,10 +222,19 @@ def handle_end_current_level():
     return ('', 204)
 
 
-@app.route('/api/admin/update-current-level-counts', methods=['POST'])
-def handle_update_current_level_counts():
-    # TODO implement and figure out how to trigger periodically
-    return ('', 200)
+@app.route('/api/admin/update-and-broadcast-level-counts', methods=['POST'])
+def handle_update_level_counts():
+    urlsafe_level_key = request.form['level_key']
+    if not urlsafe_level_key:
+        return 'Missing level_key', 400
+    level_key = ndb.Key(urlsafe=urlsafe_level_key)
+    level = level_key.get()
+    if not level:
+        return 'Couldn\'t find level for given key', 400
+    updated_level = level.to_client_model_exact()
+    # TODO send to pubsub
+    logging.info(repr(updated_level))
+    return ('', 204)
 
 
 @app.route('/api/admin/environ')

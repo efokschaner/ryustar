@@ -1,15 +1,14 @@
 import datetime
 import logging
 import os
-from urlparse import urlparse, urlunparse
 
 from flask import Flask, jsonify, request
-import flask.json
 
-from google.appengine.api import app_identity, urlfetch, users, taskqueue
+from google.appengine.api import users, taskqueue
 from google.appengine.ext import ndb
 
 from ndb_util import FancyModel
+import pubsub
 from sharded_counter import ShardedCounter
 from unique_tasks import add_task_once_in_current_interval
 
@@ -236,47 +235,7 @@ def handle_update_level_counts():
     if not level:
         return 'Couldn\'t find level for given key', 400
     updated_level = level.to_client_model_exact()
-
-    pubsub_emulator_host = os.environ.get('PUBSUB_EMULATOR_HOST', '')
-    if pubsub_emulator_host:
-        publish_base_url = 'http://' + pubsub_emulator_host
-        validate_certificate = False
-    else:
-        publish_base_url = 'https://pubsub.googleapis.com'
-        validate_certificate = True
-    publish_url = '{}/v1/projects/{}/topics/{}:publish'.format(
-        publish_base_url,
-        app_identity.get_application_id(),
-        'level-updates-topic'
-    )
-    auth_token, _ = app_identity.get_access_token([
-        'https://www.googleapis.com/auth/cloud-platform',
-        'https://www.googleapis.com/auth/pubsub'
-    ])
-    post_body = {
-        'messages': [
-            { 'data': updated_level }
-        ]
-    }
-    post_body_string = flask.json.dumps(post_body)
-    publish_response = urlfetch.fetch(
-        publish_url,
-        deadline=5, # seconds
-        method=urlfetch.POST,
-        payload=post_body_string,
-        headers={
-            'Authorization': 'Bearer {}'.format(auth_token),
-            'Content-Type': 'application/json'
-        },
-        validate_certificate=validate_certificate
-    )
-    if (not publish_response) or publish_response.status_code != 200:
-        error_message = 'HTTP {} returned from POST to {}\n response={}'.format(
-            publish_response.status_code,
-            publish_url,
-            repr(publish_response.__dict__)
-        )
-        raise Exception(error_message)
+    pubsub.publish('level-updates-topic', updated_level)
     return ('', 200)
 
 

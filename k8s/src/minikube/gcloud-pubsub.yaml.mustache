@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gcloud-pubsub-service
+spec:
+  ports:
+  - port: 9002
+    targetPort: 9001
+  selector:
+    app: gcloud-pubsub-app
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: gcloud-pubsub-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gcloud-pubsub-app
+  template:
+    metadata:
+      name: gcloud-pubsub-pod-template
+      labels:
+        app: gcloud-pubsub-app
+    spec:
+      containers:
+      - name: gcloud-pubsub-container
+        image: google/cloud-sdk:latest
+        command: ["gcloud"]
+        args:
+        - beta
+        - emulators
+        - pubsub
+        - start
+        - --host-port=0.0.0.0:9001
+        ports:
+        - containerPort: 9001
+        # As the pubsub container has no persistence we use postStart to create our topics
+        # In prod we'll do the same as part of our appengine deploy
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                while true
+                do
+                  STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X PUT http://127.0.0.1:9001/v1/projects/None/topics/level-updates-topic)
+                  # 409 is ok as it likely means it already exists
+                  if [ $STATUS -eq 200 ] || [ $STATUS -eq 409]; then
+                    echo "Got $STATUS! All done!"
+                    break
+                  else
+                    echo "Got $STATUS. Continuing to wait for emulator..."
+                  fi
+                  sleep 2
+                done

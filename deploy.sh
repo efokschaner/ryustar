@@ -14,7 +14,7 @@ yarn install
 yarn run build
 popd
 
-pip install -t app-engine/server/lib -r app-engine/server/requirements.txt
+pip install --target app-engine/server/lib -r app-engine/server/requirements.txt
 
 WEBSOCKET_CONTAINER_IMAGE=$(jq '(.base + .gcloud)."websocket-service-container-image"' global-config.json)
 docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
@@ -22,6 +22,8 @@ docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 # Deploys
 
 gcloud docker -- push ${WEBSOCKET_CONTAINER_IMAGE}
+
+gcloud beta pubsub topics create level-updates-topic
 
 gcloud app deploy app-engine/server/queue.yaml
 

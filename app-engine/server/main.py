@@ -4,7 +4,9 @@ import os
 from urlparse import urlparse, urlunparse
 
 from flask import Flask, jsonify, request
-from google.appengine.api import users, taskqueue
+import flask.json
+
+from google.appengine.api import app_identity, urlfetch, users, taskqueue
 from google.appengine.ext import ndb
 
 from ndb_util import FancyModel
@@ -13,12 +15,14 @@ from unique_tasks import add_task_once_in_current_interval
 
 IS_PUBLIC_ENVIRONMENT = os.environ.get('SERVER_SOFTWARE', '').startswith('Google App Engine')
 
+
 class Level(FancyModel):
     name_ish = ndb.StringProperty(required=True)
     start_time = ndb.DateTimeProperty(auto_now_add=True)
     end_time = ndb.DateTimeProperty()
     star_votes_counter_key = ndb.KeyProperty(kind=ShardedCounter)
     garbage_votes_counter_key = ndb.KeyProperty(kind=ShardedCounter)
+    updated_timestamp = ndb.DateTimeProperty(auto_now=True)
 
     @classmethod
     def create(cls, name_ish):
@@ -212,14 +216,14 @@ def handle_start_new_level():
     finish_current_level()
     new_level = Level.create(request.form['name_ish'])
     set_current_level(new_level)
-    return ('', 204)
+    return ('', 200)
 
 
 @app.route('/api/admin/end-current-level', methods=['POST'])
 def handle_end_current_level():
     finish_current_level()
     set_current_level(None)
-    return ('', 204)
+    return ('', 200)
 
 
 @app.route('/api/admin/update-and-broadcast-level-counts', methods=['POST'])
@@ -232,9 +236,48 @@ def handle_update_level_counts():
     if not level:
         return 'Couldn\'t find level for given key', 400
     updated_level = level.to_client_model_exact()
-    # TODO send to pubsub
-    logging.info(repr(updated_level))
-    return ('', 204)
+
+    pubsub_emulator_host = os.environ.get('PUBSUB_EMULATOR_HOST', '')
+    if pubsub_emulator_host:
+        publish_base_url = 'http://' + pubsub_emulator_host
+        validate_certificate = False
+    else:
+        publish_base_url = 'https://pubsub.googleapis.com'
+        validate_certificate = True
+    publish_url = '{}/v1/projects/{}/topics/{}:publish'.format(
+        publish_base_url,
+        app_identity.get_application_id(),
+        'level-updates-topic'
+    )
+    auth_token, _ = app_identity.get_access_token([
+        'https://www.googleapis.com/auth/cloud-platform',
+        'https://www.googleapis.com/auth/pubsub'
+    ])
+    post_body = {
+        'messages': [
+            { 'data': updated_level }
+        ]
+    }
+    post_body_string = flask.json.dumps(post_body)
+    publish_response = urlfetch.fetch(
+        publish_url,
+        deadline=5, # seconds
+        method=urlfetch.POST,
+        payload=post_body_string,
+        headers={
+            'Authorization': 'Bearer {}'.format(auth_token),
+            'Content-Type': 'application/json'
+        },
+        validate_certificate=validate_certificate
+    )
+    if (not publish_response) or publish_response.status_code != 200:
+        error_message = 'HTTP {} returned from POST to {}\n response={}'.format(
+            publish_response.status_code,
+            publish_url,
+            repr(publish_response.__dict__)
+        )
+        raise Exception(error_message)
+    return ('', 200)
 
 
 @app.route('/api/admin/environ')

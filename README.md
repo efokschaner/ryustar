@@ -62,6 +62,20 @@ There will be some prompts.
 
 ## Appendix
 
+### Updating app-engine vendored pip dependencies
+Pip does not support freezing a vendored dir of libs which makes maintaining the requirements.txt a pain
+One workaround is to create a virtualenv just for re-jigger-ing dependencies and then freezing it,
+then switching back to installing into the vendored dir. eg.
+```bash
+pyenv virtualenv venv
+pyenv activate venv
+pip install -r requirements.txt
+pip install google-api-python-client
+pip freeze > requirements.txt
+pyenv deactivate
+pyenv uninstall venv
+```
+
 ### Setting up minikube
 You'll need minikube to run a local container cluster.
 

@@ -49,6 +49,8 @@ spec:
         - --api_port=8060
         - --enable_host_checking=false
         - --use_mtime_file_watcher
+        - --env_var
+        - PUBSUB_EMULATOR_HOST=gcloud-pubsub-service:9002
         ports:
         - containerPort: 8060
         - containerPort: 8070

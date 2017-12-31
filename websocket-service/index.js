@@ -1,4 +1,5 @@
 let http = require('http')
+let os = require('os')
 
 let PubSub = require('@google-cloud/pubsub')
 let uuidv4 = require('uuid/v4')
@@ -37,8 +38,8 @@ class WebSocketBroadCastServer {
   listen (serverPort) {
     return new Promise((resolve, reject) => {
       this.httpServer.listen(serverPort, () => {
-        let address = this.httpServer.address();
-        console.log('HTTP server is listening on ', address);
+        let address = this.httpServer.address()
+        console.log('HTTP server is listening on ', address)
         resolve(address)
       })
       this.httpServer.on('error', (err) => {
@@ -66,16 +67,17 @@ class WebSocketBroadCastServer {
     wsConnection.on('message', function (message) {
       // For now we're not expecting any client-to-server messages
       // If we receive one, assume the client is misbehaving and close the connection
-      wsConnection.clos()
+      wsConnection.close()
     })
 
     wsConnection.on('close', function (reasonCode, description) {
-      console.log('WebSocket client ' + wsConnection.remoteAddress + ' disconnected.');
+      // console.log('WebSocket client ' + wsConnection.remoteAddress + ' disconnected.')
     })
   }
 
   _originIsAllowed (origin) {
     // put logic here to detect whether the specified origin is allowed.
+    // I see no reason for this public s2c-only endpoint to have any origin restrictions.
     return true
   }
 }
@@ -85,7 +87,9 @@ async function main () {
   let listenPort = parseInt(listenPortString)
   let server = new WebSocketBroadCastServer()
   await server.listen(listenPort)
-  let subscriptionId = uuidv4()
+  // Subscription ids must start with a letter and have other constraints
+  // see https://github.com/googleapis/googleapis/blob/f0f1588a68ad2c58ea2e9352b083e04a20859d3c/google/pubsub/v1/pubsub.proto#L406
+  let subscriptionId = `s-${os.hostname()}-${uuidv4()}`
   let subscription = await createTopicSubscription('level-updates-topic', subscriptionId)
 
   async function handleShutdown (signal) {

@@ -54,7 +54,7 @@ class WebSocketBroadCastServer {
 
   shutDown () {
     this.wsServer.shutDown()
-    this.httpServer.shutDown()
+    this.httpServer.close()
   }
 
   _handleWebsocketUpgradeRequest (request) {
@@ -92,11 +92,11 @@ async function main () {
   let subscriptionId = `s-${os.hostname()}-${uuidv4()}`
   let subscription = await createTopicSubscription('level-updates-topic', subscriptionId)
 
-  async function handleShutdown (signal) {
+  async function handleShutdown () {
     // Here we try to gracefully shutdown. Including deleting our dynamic subscription
     // from gcloud pubsub. Of course this is not guaranteed to work and so we should implement a
     // cron to clean up those subscriptions somehow.
-    console.log(`Received ${signal}. Shutting down.`)
+    console.log('Received signal. Shutting down.')
     server.shutDown()
     await subscription.close()
     await subscription.delete()

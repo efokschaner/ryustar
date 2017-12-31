@@ -21,10 +21,10 @@ class ShardedCounter(FancyModel):
         return counter
 
     def increase_total_shards(self, num_total_shards):
-        while len(self.keys) < num_total_shards:
-            shard = _CounterShard()
-            shard_key = shard.put()
-            self.keys.append(shard_key)
+        new_shards = []
+        for i in xrange(num_total_shards - len(self.keys)):
+            new_shards.append(_CounterShard())
+        self.keys.extend(ndb.put_multi(new_shards))
         self.put()
 
     def get_count_fast(self):

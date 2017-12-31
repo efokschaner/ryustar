@@ -4,9 +4,17 @@
     "websocket-service-service-listen-port": 9091
   },
   "minikube": {
-    "websocket-service-container-image": "websocket-service:local-dev"
+    "websocket-service-container-image": "websocket-service:local-dev",
+    "env-var-pusub-emulator-host-key": "PUBSUB_EMULATOR_HOST",
+    "env-var-pusub-emulator-host-value": "gcloud-pubsub-service:9002",
+    "env-var-gcloud-project-key": "GCLOUD_PROJECT",
+    "env-var-gcloud-project-value": "None"
   },
   "gcloud": {
-    "websocket-service-container-image": "gcr.io/$(gcloud config get-value project -q)/websocket-service:latest"
+    "websocket-service-container-image": "gcr.io/$(gcloud config get-value project -q)/websocket-service:latest",
+    "env-var-pusub-emulator-host-key": "NO_PUBSUB_EMULATOR_HOST",
+    "env-var-pusub-emulator-host-value": "",
+    "env-var-gcloud-project-key": "NO_OVERRIDE_GCLOUD_PROJECT",
+    "env-var-gcloud-project-value": ""
   }
 }

@@ -50,7 +50,7 @@ spec:
         - --enable_host_checking=false
         - --use_mtime_file_watcher
         - --env_var
-        - PUBSUB_EMULATOR_HOST=gcloud-pubsub-service:9002
+        - PUBSUB_EMULATOR_HOST={{ env-var-pusub-emulator-host-value }}
         ports:
         - containerPort: 8060
         - containerPort: 8070

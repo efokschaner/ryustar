@@ -31,5 +31,9 @@ spec:
         env:
         - name: LISTEN_PORT
           value: "{{ websocket-service-container-listen-port }}"
+        - name: "{{ env-var-pusub-emulator-host-key }}"
+          value: "{{ env-var-pusub-emulator-host-value }}"
+        - name: "{{ env-var-gcloud-project-key }}"
+          value: "{{ env-var-gcloud-project-value }}"
         ports:
         - containerPort: {{ websocket-service-container-listen-port }}

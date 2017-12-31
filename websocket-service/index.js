@@ -1,56 +1,119 @@
-let WebSocketServer = require('websocket').server
 let http = require('http')
 
-function main () {
-  let portString = process.argv[2] || process.env.LISTEN_PORT || '9090'
-  let port = parseInt(portString)
-  let server = http.createServer(function (request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url)
-    response.writeHead(404)
-    response.end()
-  })
-  server.listen(port, function () {
-    console.log((new Date()) + ' Server is listening on port ' + port)
-  })
+let PubSub = require('@google-cloud/pubsub')
+let uuidv4 = require('uuid/v4')
+let WebSocketServer = require('websocket').server
 
-  let wsServer = new WebSocketServer({
-    httpServer: server,
-    // You should not use autoAcceptConnections for production
-    // applications, as it defeats all standard cross-origin protection
-    // facilities built into the protocol and the browser.  You should
-    // *always* verify the connection's origin and decide whether or not
-    // to accept it.
-    autoAcceptConnections: false
-  })
+process.on('unhandledRejection', error => {
+  throw error
+})
 
-  function originIsAllowed (origin) {
+function createTopicSubscription (topicName, subscriptionName) {
+  const pubsub = PubSub()
+  const topic = pubsub.topic(topicName)
+  return topic.createSubscription(subscriptionName, {
+    messageRetentionDuration: 10 * 60 // seconds
+  }).then((results) => {
+    const subscription = results[0]
+    console.log(`Subscription ${subscription.name} created.`)
+    return subscription
+  })
+}
+
+class WebSocketBroadCastServer {
+  constructor () {
+    this.httpServer = http.createServer(function (request, response) {
+      response.writeHead(404)
+      response.end()
+    })
+    this.wsServer = new WebSocketServer({
+      httpServer: this.httpServer,
+      autoAcceptConnections: false,
+      keepaliveInterval: 50000
+    })
+    this.wsServer.on('request', this._handleWebsocketUpgradeRequest.bind(this))
+  }
+
+  listen (serverPort) {
+    return new Promise((resolve, reject) => {
+      this.httpServer.listen(serverPort, () => {
+        let address = this.httpServer.address();
+        console.log('HTTP server is listening on ', address);
+        resolve(address)
+      })
+      this.httpServer.on('error', (err) => {
+        reject(err)
+      })
+    })
+  }
+
+  broadcast (message) {
+    return this.wsServer.broadcastUTF(message)
+  }
+
+  shutDown () {
+    this.wsServer.shutDown()
+    this.httpServer.shutDown()
+  }
+
+  _handleWebsocketUpgradeRequest (request) {
+    if (!this._originIsAllowed(request.origin)) {
+      request.reject()
+      console.log('Connection from origin ' + request.origin + ' rejected.')
+      return
+    }
+    let wsConnection = request.accept(undefined, request.origin)
+    wsConnection.on('message', function (message) {
+      // For now we're not expecting any client-to-server messages
+      // If we receive one, assume the client is misbehaving and close the connection
+      wsConnection.clos()
+    })
+
+    wsConnection.on('close', function (reasonCode, description) {
+      console.log('WebSocket client ' + wsConnection.remoteAddress + ' disconnected.');
+    })
+  }
+
+  _originIsAllowed (origin) {
     // put logic here to detect whether the specified origin is allowed.
     return true
   }
+}
 
-  wsServer.on('request', function (request) {
-    if (!originIsAllowed(request.origin)) {
-      // Make sure we only accept requests from an allowed origin
-      request.reject()
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.')
-      return
-    }
+async function main () {
+  let listenPortString = process.argv[2] || process.env.LISTEN_PORT || '9090'
+  let listenPort = parseInt(listenPortString)
+  let server = new WebSocketBroadCastServer()
+  await server.listen(listenPort)
+  let subscriptionId = uuidv4()
+  let subscription = await createTopicSubscription('level-updates-topic', subscriptionId)
 
-    var connection = request.accept('echo-protocol', request.origin)
-    console.log((new Date()) + ' Connection accepted.')
-    connection.on('message', function (message) {
-      if (message.type === 'utf8') {
-        console.log('Received Message: ' + message.utf8Data)
-        connection.sendUTF(message.utf8Data)
-      } else if (message.type === 'binary') {
-        console.log('Received Binary Message of ' + message.binaryData.length + ' bytes')
-        connection.sendBytes(message.binaryData)
-      }
-    })
-    connection.on('close', function (reasonCode, description) {
-      console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.')
-    })
+  async function handleShutdown (signal) {
+    // Here we try to gracefully shutdown. Including deleting our dynamic subscription
+    // from gcloud pubsub. Of course this is not guaranteed to work and so we should implement a
+    // cron to clean up those subscriptions somehow.
+    console.log(`Received ${signal}. Shutting down.`)
+    server.shutDown()
+    await subscription.close()
+    await subscription.delete()
+  }
+
+  process.on('SIGINT', handleShutdown)
+  process.on('SIGTERM', handleShutdown)
+
+  subscription.on('error', function (err) {
+    console.error('subscriptions error:', err)
   })
+
+  function onMessage (message) {
+    message.ack()
+    let dataString = Buffer.from(message.data, 'base64').toString()
+    server.broadcast(dataString)
+  }
+
+  subscription.on('message', onMessage)
+
+  console.info('websocket-service is fully initialised')
 }
 
 if (require.main === module) {

@@ -23,7 +23,7 @@ def publish(topic_name, message_data_object):
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/pubsub'
     ])
-    message_data_string = base64.b64encode(flask.json.dumps(message_data_object))
+    message_data_string = base64.b64encode(unicode(flask.json.dumps(message_data_object), 'utf-8'))
     post_body = {
         'messages': [
             { 'data': message_data_string }

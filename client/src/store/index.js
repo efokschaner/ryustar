@@ -36,7 +36,8 @@ async function fetchJson (url, fetchOptions) {
 let state = {
   currentLevel: null,
   hasSetCurrentLevel: false,
-  currentVote: null
+  currentVote: null,
+  websocketHasError: false
 }
 
 let getters = {
@@ -59,6 +60,9 @@ let mutations = {
   },
   setCurrentVote (state, newCurrentVote) {
     state.currentVote = newCurrentVote
+  },
+  setWebSocketHasError (state, newWebSocketHasError) {
+    state.websocketHasError = newWebSocketHasError
   }
 }
 

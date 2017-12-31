@@ -7,12 +7,11 @@ from flask import Flask, jsonify, request
 from google.appengine.api import users, taskqueue
 from google.appengine.ext import ndb
 
+import config
 from ndb_util import FancyModel
 import pubsub
 from sharded_counter import ShardedCounter
 from unique_tasks import add_task_once_in_current_interval
-
-IS_PUBLIC_ENVIRONMENT = os.environ.get('SERVER_SOFTWARE', '').startswith('Google App Engine')
 
 
 class Level(FancyModel):
@@ -25,8 +24,9 @@ class Level(FancyModel):
 
     @classmethod
     def create(cls, name_ish):
-        star_votes_counter = ShardedCounter.create(20)
-        garbage_votes_counter = ShardedCounter.create(20)
+        num_shards = config.PersistentConfig.get_singleton().initial_num_shards_for_vote_counters
+        star_votes_counter = ShardedCounter.create(num_shards)
+        garbage_votes_counter = ShardedCounter.create(num_shards)
         level = cls()
         level.star_votes_counter_key = star_votes_counter.key
         level.garbage_votes_counter_key = garbage_votes_counter.key
@@ -35,11 +35,11 @@ class Level(FancyModel):
         return level
 
     def _to_client_model_shared(self):
-        excludes = [
+        exclude = [
             'star_votes_counter_key',
             'garbage_votes_counter_key'
         ]
-        return self.to_dict(exclude=excludes)
+        return self.to_dict(exclude=exclude)
 
     def to_client_model_fast(self):
         level_dict = self._to_client_model_shared()
@@ -114,10 +114,11 @@ app = Flask(__name__)
 
 @app.route('/api/config')
 def handle_get_config():
-    return jsonify({
-        'login_url': users.create_login_url('/admin/'),
-        'logout_url': users.create_logout_url('/')
-    })
+    conf = config.PersistentConfig.get_singleton()
+    client_conf = conf.to_client_model()
+    client_conf['login_url'] = users.create_login_url('/admin/')
+    client_conf['logout_url'] = users.create_logout_url('/')
+    return jsonify(client_conf)
 
 
 @app.route('/api/level/current')
@@ -236,6 +237,17 @@ def handle_update_level_counts():
         return 'Couldn\'t find level for given key', 400
     updated_level = level.to_client_model_exact()
     pubsub.publish('level-updates-topic', updated_level)
+    return ('', 200)
+
+
+@app.route('/api/admin/increase-current-level-total-counter-shards', methods=['POST'])
+def handle_increase_current_level_total_counter_shards():
+    total_shards = request.form['total_shards']
+    if not total_shards:
+        return 'total_shards must be a number > 0', 400
+    cur_level = get_current_level()
+    cur_level.star_votes_counter_key.get().increase_total_shards(total_shards)
+    cur_level.garbage_votes_counter_key.get().increase_total_shards(total_shards)
     return ('', 200)
 
 

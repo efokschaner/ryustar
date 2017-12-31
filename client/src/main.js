@@ -14,7 +14,7 @@ function createReconnectingWebSocket (url) {
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 10000,
     maxRetries: Infinity,
-    debug: true
+    debug: false
   }
   return new ReconnectingWebSocket(url, [], reconnectingWebSocketConfig)
 }

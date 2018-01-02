@@ -13,4 +13,4 @@ docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 
 docker build -t dev-appserver-proxy:local-dev dev-appserver-proxy
 
-kubectl apply -f k8s/dist/minikube
+kubectl apply --context="minikube" -f k8s/dist/minikube

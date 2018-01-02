@@ -31,3 +31,5 @@ gcloud app deploy app-engine/server/app.yaml
 gcloud app deploy app-engine/www-redirect-service/app.yaml
 
 gcloud app deploy app-engine/dispatch.yaml
+
+kubectl --context="gke_studious-osprey-189923_us-central1-a_ryustar-cluster-0" -f k8s/dist/gcloud

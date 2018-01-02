@@ -95,3 +95,20 @@ You'll also need Docker for your platform: https://store.docker.com/
 Get minikube up and running to use the rest of this readme:
 
     minikube start
+
+### GKE notes
+Before any other clusterrole configs can be made:
+
+    kubectl create clusterrolebinding CHOOSE_A_FILENAME-cluster-admin-binding --clusterrole=cluster-admin --user=<YOUR_USERNAME>
+
+Install latest dashboard:
+- Disable built in kube dash in GCP Console
+- kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+
+Production dashboard:
+
+    kubectl proxy
+
+http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+
+Get token from access-token in ~/.kube/config

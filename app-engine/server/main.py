@@ -99,7 +99,7 @@ class UserVote(FancyModel):
 
     @classmethod
     def get_key(cls, user_id, level_key):
-        return ndb.Key(UserVote, user_id, parent=level_key)
+        return ndb.Key(UserVote, '{}-{}'.format(level_key.urlsafe(), user_id))
 
 
 def get_current_vote(user_id):

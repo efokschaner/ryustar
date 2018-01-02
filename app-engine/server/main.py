@@ -244,10 +244,11 @@ def handle_update_level_counts():
 def handle_increase_current_level_total_counter_shards():
     total_shards = request.form['total_shards']
     if not total_shards:
-        return 'total_shards must be a number > 0', 400
+        return 'Missing total_shards', 400
+    total_shards_int = int(total_shards)
     cur_level = get_current_level()
-    cur_level.star_votes_counter_key.get().increase_total_shards(total_shards)
-    cur_level.garbage_votes_counter_key.get().increase_total_shards(total_shards)
+    cur_level.star_votes_counter_key.get().increase_total_shards(total_shards_int)
+    cur_level.garbage_votes_counter_key.get().increase_total_shards(total_shards_int)
     return ('', 200)
 
 

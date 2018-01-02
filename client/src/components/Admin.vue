@@ -1,12 +1,22 @@
 <template>
   <div class="admin">
-    <form v-on:submit.prevent="startNewLevel">
-      <input v-model="newLevelNameIsh" type=text required="required" placeholder="Level Name (ish)">
-      <input type="submit" class="btn btn-default" value="Start New Level">
-    </form>
-    <form v-on:submit.prevent="endCurrentLevel">
-      <input type="submit" class="btn btn-default" value="End Current Level">
-    </form>
+    <div class="form-wrapper">
+      <form v-on:submit.prevent="startNewLevel">
+        <input v-model="newLevelNameIsh" type=text required="required" placeholder="Level Name (ish)">
+        <input type="submit" class="btn btn-default" value="Start New Level">
+      </form>
+    </div>
+    <div class="form-wrapper">
+      <form v-on:submit.prevent="endCurrentLevel">
+        <input type="submit" class="btn btn-default" value="End Current Level">
+      </form>
+    </div>
+    <div class="form-wrapper">
+      <form v-on:submit.prevent="increaseCounterShards">
+        <input v-model.number="selectedNumShards" required="required" type="number">
+        <input type="submit" class="btn btn-default" value="Change num counter shards">
+      </form>
+    </div>
     <div class="working" v-if="working">
       Working...
     </div>
@@ -22,7 +32,8 @@ export default {
     return {
       working: false,
       error: null,
-      newLevelNameIsh: ''
+      newLevelNameIsh: '',
+      selectedNumShards: 0
     }
   },
   created () {
@@ -69,6 +80,28 @@ export default {
       } finally {
         this.working = false
       }
+    },
+    async increaseCounterShards () {
+      this.error = null
+      this.working = true
+      let fetchBody = new URLSearchParams()
+      fetchBody.set('total_shards', this.selectedNumShards)
+      let fetchOptions = {
+        method: 'POST',
+        body: fetchBody,
+        credentials: 'same-origin'
+      }
+      try {
+        let response = await fetch('/api/admin/increase-current-level-total-counter-shards', fetchOptions)
+        if (!response.ok) {
+          let errorText = await response.text()
+          throw new Error(`HTTP ${response.status} from /api/admin/increase-current-level-total-counter-shards : ${errorText}`)
+        }
+      } catch (err) {
+        this.error = err.toString()
+      } finally {
+        this.working = false
+      }
     }
   }
 }
@@ -88,5 +121,8 @@ li {
 }
 a {
   color: #42b983;
+}
+.form-wrapper {
+  padding: 5px
 }
 </style>

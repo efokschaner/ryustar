@@ -20,10 +20,10 @@ spec:
         backend:
           serviceName: dev-appserver-service
           servicePort: admin
-  - host: ws.ryustar.invalid
+  - host: gke.ryustar.invalid
     http:
       paths:
-      - path:
+      - path: /websocket
         backend:
           serviceName: websocket-service
           servicePort: {{ websocket-service-service-listen-port }}

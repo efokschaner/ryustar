@@ -14,12 +14,12 @@ Built using Google App Engine, Google Container Engine, Flask, Vue.js
 Assuming you have a minikube cluster running, do the following:
 - Add entries for:
   - `www.ryustar.invalid`
-  - `ws.ryustar.invalid`
+  - `gke.ryustar.invalid`
   - `gae-admin.ryustar.invalid`
 
   to your hosts file using your minikube ip, which you can get with `minikube ip`. eg.
 
-      192.168.64.6 www.ryustar.invalid ws.ryustar.invalid gae-admin.ryustar.invalid
+      192.168.64.6 www.ryustar.invalid gke.ryustar.invalid gae-admin.ryustar.invalid
 
   You'll need to update this each time your minikube ip changes (eg. on restart)
 - Enable the ingress addon:
@@ -55,6 +55,8 @@ yarn run dev
 #### Prerequisites
 - `gcloud` (Google Cloud SDK) is installed and configured correctly
 - `kubectl` is installed. You can get it via `gcloud components install kubectl`
+- `gcloud container clusters get-credentials ryustar-cluster-0 --zone us-central1-a`
+
 ``` bash
 ./deploy.sh
 ```

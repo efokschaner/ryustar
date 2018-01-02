@@ -4,27 +4,6 @@ metadata:
   name: ryustar-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    # Increase these for websockets
-    nginx.ingress.kubernetes.io/proxy-read-timeout: 3600
-    nginx.ingress.kubernetes.io/proxy-send-timeout: 3600
-    # dev_appserver.py admin server has some pretty inflexible Origin header checking that
-    # is tightly coupled to its --admin_host, --admin_port params
-    # The app server also has coupling of it's task queue implementation to incoming Host headers
-    # To work around these we remove origin headers to disable the dev_appserver admin site checks
-    # And rewrite the host header for the site to make it appear that its traffic is coming from its own host.
-    # The `if` clauses are unfortunately necessary as the `configuration-snippet` is
-    # inserted in to the `location` config block for every virtual host.
-    ingress.kubernetes.io/configuration-snippet: |
-      set $new_origin $http_origin;
-      set $new_host $http_host;
-      if ($host = "gae-admin.ryustar.invalid") {
-        set $new_origin "";
-      }
-      if ($host = "www.ryustar.invalid") {
-        set $new_host "127.0.0.1:8080";
-      }
-      proxy_set_header Origin $new_origin;
-      proxy_set_header Host $new_host;
 spec:
   rules:
   - host: www.ryustar.invalid
@@ -33,14 +12,14 @@ spec:
       - path:
         backend:
           serviceName: dev-appserver-service
-          servicePort: 8081
+          servicePort: site
   - host: gae-admin.ryustar.invalid
     http:
       paths:
       - path:
         backend:
           serviceName: dev-appserver-service
-          servicePort: 8071
+          servicePort: admin
   - host: ws.ryustar.invalid
     http:
       paths:

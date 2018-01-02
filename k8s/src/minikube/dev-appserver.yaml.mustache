@@ -6,14 +6,11 @@ metadata:
 spec:
   ports:
   - name: site
-    port: 8081
-    targetPort: 8080
+    port: 8078
+    targetPort: site
   - name: admin
-    port: 8071
-    targetPort: 8070
-  - name: api
-    port: 8061
-    targetPort: 8060
+    port: 8068
+    targetPort: admin
   selector:
     app: dev-appserver-app
 ---
@@ -41,23 +38,35 @@ spec:
         - dispatch.yaml
         - server/app.yaml
         - www-redirect-service/app.yaml
-        - --host=0.0.0.0
+        - --host=127.0.0.1
         - --port=8080
-        - --admin_host=0.0.0.0
+        - --admin_host=127.0.0.1
         - --admin_port=8070
-        - --api_host=0.0.0.0
+        - --api_host=127.0.0.1
         - --api_port=8060
         - --enable_host_checking=false
         - --use_mtime_file_watcher
         - --env_var
         - PUBSUB_EMULATOR_HOST={{ env-var-pusub-emulator-host-value }}
-        ports:
-        - containerPort: 8060
-        - containerPort: 8070
-        - containerPort: 8080
         volumeMounts:
         - mountPath: /app-engine-src-container
           name: app-engine-src-volume
+      - name: dev-appserver-proxy-container
+        image: dev-appserver-proxy:local-dev
+        env:
+        - name: PROXY_LISTEN_PORT
+          value: "8079"
+        - name: PROXY_TARGET_PORT
+          value: "8080"
+        - name: ADMIN_PROXY_LISTEN_PORT
+          value: "8069"
+        - name: ADMIN_PROXY_TARGET_PORT
+          value: "8070"
+        ports:
+        - name: site
+          containerPort: 8079
+        - name: admin
+          containerPort: 8069
       volumes:
       - name: app-engine-src-volume
         hostPath:

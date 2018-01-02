@@ -1,3 +1,5 @@
+import { fetchJson } from '../fetch.js'
+
 import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
@@ -22,15 +24,6 @@ function getUserId () {
   let newId = uuidv4()
   window.localStorage.setItem('user_id', newId)
   return newId
-}
-
-async function fetchJson (url, fetchOptions) {
-  let response = await fetch(url, fetchOptions)
-  if (!response.ok) {
-    let errorText = await response.text()
-    throw new Error(`HTTP ${response.status} from ${response.url} : ${errorText}`)
-  }
-  return response.json()
 }
 
 let state = {

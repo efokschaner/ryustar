@@ -1,9 +1,28 @@
 import base64
+import datetime
 import os
 
 import flask.json
 
 from google.appengine.api import app_identity, urlfetch
+
+from unique_tasks import add_task_once_in_current_interval
+
+
+def schedule_push_current_level():
+    try:
+        refresh_interval_seconds = 5
+        add_task_once_in_current_interval(
+            base_name = 'update-and-broadcast-level-counts-task',
+            interval_seconds = refresh_interval_seconds,
+            queue_name = 'update-and-broadcast-level-counts-queue',
+            url = '/api/admin/update-and-broadcast-level-counts',
+            params = {},
+            eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=refresh_interval_seconds)
+        )
+    except Exception:
+        # Caller doesn't need to know what went wrong in here:
+        logging.exception('Error while adding update counts task')
 
 
 def publish(topic_name, message_data_object):

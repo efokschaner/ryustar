@@ -11,7 +11,6 @@ import config
 from ndb_util import FancyModel
 import pubsub
 from sharded_counter import ShardedCounter
-from unique_tasks import add_task_once_in_current_interval
 
 
 class Level(FancyModel):
@@ -69,6 +68,7 @@ def set_current_level(level):
     else:
         cur_level.level_key = level.key
     cur_level.put()
+    pubsub.schedule_push_current_level()
 
 
 def get_current_level():
@@ -195,19 +195,7 @@ def handle_vote():
     level_key = ndb.Key(urlsafe=urlsafe_level_key)
     commit_vote_result = commit_vote(user_id, choice, level_key)
     if commit_vote_result.counts_need_update:
-        try:
-            refresh_interval_seconds = 5
-            add_task_once_in_current_interval(
-                base_name = 'update-and-broadcast-level-counts-task',
-                interval_seconds = refresh_interval_seconds,
-                queue_name = 'update-and-broadcast-level-counts-queue',
-                url = '/api/admin/update-and-broadcast-level-counts',
-                params = {'level_key': urlsafe_level_key},
-                eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=refresh_interval_seconds)
-            )
-        except Exception:
-            # Caller doesn't need to know what went wrong in here:
-            logging.exception('Error while adding update count task')
+        pubsub.schedule_push_current_level()
     return commit_vote_result.flask_response
 
 
@@ -228,15 +216,12 @@ def handle_end_current_level():
 
 @app.route('/api/admin/update-and-broadcast-level-counts', methods=['POST'])
 def handle_update_level_counts():
-    urlsafe_level_key = request.form['level_key']
-    if not urlsafe_level_key:
-        return 'Missing level_key', 400
-    level_key = ndb.Key(urlsafe=urlsafe_level_key)
-    level = level_key.get()
-    if not level:
-        return 'Couldn\'t find level for given key', 400
-    updated_level = level.to_client_model_exact()
-    pubsub.publish('level-updates-topic', updated_level)
+    cur_level = get_current_level()
+    if cur_level is None:
+        cur_level_dict = None
+    else:
+        cur_level_dict = cur_level.to_client_model_exact()
+    pubsub.publish('level-updates-topic', cur_level_dict)
     return ('', 200)
 
 

@@ -9,12 +9,12 @@
       <div class="votes-container">
         <div class="votes-item">
           <h3>Star</h3>
-          <p>{{currentLevel.star_votes_count}} votes ({{ starVotesPercent }}%)</p>
+          <p>{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
           <a v-if="!hasVoted('star')" class="vote-link" v-on:click.prevent="performVote('star')">Vote</a>
         </div>
         <div>
           <h3>Garbage</h3>
-          <p>{{currentLevel.garbage_votes_count}} votes ({{ garbageVotesPercent }}%)</p>
+          <p>{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
           <a v-if="!hasVoted('garbage')" class="vote-link" v-on:click.prevent="performVote('garbage')">Vote</a>
         </div>
       </div>
@@ -38,24 +38,23 @@ export default {
   },
   computed: {
     starVotesPercent () {
-      let curLevel = this.$store.state.currentLevel
-      let totalVotes = curLevel.star_votes_count + curLevel.garbage_votes_count
+      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
       if (totalVotes === 0) {
         return 0
       }
-      return Math.round(100 * curLevel.star_votes_count / totalVotes)
+      return Math.round(100 * this.currentLevelVotesDisplayValues.star / totalVotes)
     },
     garbageVotesPercent () {
-      let curLevel = this.$store.state.currentLevel
-      let totalVotes = curLevel.star_votes_count + curLevel.garbage_votes_count
+      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
       if (totalVotes === 0) {
         return 0
       }
-      return Math.round(100 * curLevel.garbage_votes_count / totalVotes)
+      return Math.round(100 * this.currentLevelVotesDisplayValues.garbage / totalVotes)
     },
     ...mapState([
       'currentLevel',
-      'currentVote'
+      'currentVote',
+      'currentLevelVotesDisplayValues'
     ]),
     ...mapGetters([
       'noLevelInProgress'

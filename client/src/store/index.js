@@ -30,7 +30,11 @@ let state = {
   currentLevel: null,
   hasSetCurrentLevel: false,
   currentVote: null,
-  websocketHasError: false
+  websocketHasError: false,
+  currentLevelVotesDisplayValues: {
+    star: 0,
+    garbage: 0
+  }
 }
 
 let getters = {
@@ -39,16 +43,63 @@ let getters = {
   }
 }
 
+function lerp (start, end, factor) {
+  return start + ((end - start) * factor)
+}
+
+let activeLerp = null
+function updateLerp ({commit, state}) {
+  if (activeLerp) {
+    let lerpFactor = (Date.now() - activeLerp.startTimeMS) / activeLerp.durationMS
+    let activeLerpRef = activeLerp
+    if (lerpFactor >= 1) {
+      lerpFactor = 1
+      activeLerp = null
+    }
+    let newValues = {
+      star: lerp(activeLerpRef.startValues.star, state.currentLevel.star_votes_count, lerpFactor),
+      garbage: lerp(activeLerpRef.startValues.garbage, state.currentLevel.garbage_votes_count, lerpFactor)
+    }
+    commit('setCurrentLevelVotesDisplayValues', newValues)
+  }
+  setTimeout(() => updateLerp({commit, state}), 50)
+}
+
+function setCurrentLevel (state, newCurrentLevel) {
+  // if the current level changes, current vote is null, counts are 0, stop lerping
+  if (!state.currentLevel || !newCurrentLevel || state.currentLevel.key !== newCurrentLevel.key) {
+    state.currentVote = null
+    state.currentLevelVotesDisplayValues.star = 0
+    state.currentLevelVotesDisplayValues.garbage = 0
+    activeLerp = null
+  }
+  if (newCurrentLevel) {
+    activeLerp = {
+      startTimeMS: Date.now(),
+      durationMS: state.currentLevel ? 1500 : 1000, // Lerp faster if this is the first update
+      startValues: {
+        star: state.currentLevelVotesDisplayValues.star,
+        garbage: state.currentLevelVotesDisplayValues.garbage
+      }
+    }
+  }
+  state.currentLevel = newCurrentLevel
+  state.hasSetCurrentLevel = true
+}
+
 let mutations = {
-  setCurrentLevel (state, newCurrentLevel) {
-    state.currentLevel = newCurrentLevel
-    state.hasSetCurrentLevel = true
-  },
+  setCurrentLevel,
   applyPredicitonToCurrentLevel (state, {oldChoice, newChoice}) {
     state.currentLevel[newChoice + '_votes_count'] += 1
+    if (activeLerp) {
+      activeLerp.startValues[newChoice] += 1
+    }
     let oldKey = oldChoice + '_votes_count'
     if (oldKey in state.currentLevel) {
       state.currentLevel[oldKey] -= 1
+      if (activeLerp) {
+        activeLerp.startValues[oldChoice] -= 1
+      }
     }
   },
   setCurrentVote (state, newCurrentVote) {
@@ -56,6 +107,10 @@ let mutations = {
   },
   setWebSocketHasError (state, newWebSocketHasError) {
     state.websocketHasError = newWebSocketHasError
+  },
+  setCurrentLevelVotesDisplayValues (state, newValues) {
+    state.currentLevelVotesDisplayValues.star = Math.round(newValues.star)
+    state.currentLevelVotesDisplayValues.garbage = Math.round(newValues.garbage)
   }
 }
 
@@ -113,12 +168,13 @@ async function performVote ({ commit, state }, choice) {
 let actions = {
   fetchCurrentLevel,
   fetchCurrentVote,
-  performVote
+  performVote,
+  updateLerp
 }
 
 let modules = {}
 
-export default new Vuex.Store({
+let store = new Vuex.Store({
   actions,
   getters,
   modules,
@@ -127,3 +183,7 @@ export default new Vuex.Store({
   strict: debug,
   plugins: debug ? [createLogger()] : []
 })
+
+store.dispatch('updateLerp')
+
+export default store

@@ -94,12 +94,14 @@ let mutations = {
     if (activeLerp) {
       activeLerp.startValues[newChoice] += 1
     }
+    state.currentLevelVotesDisplayValues[newChoice] += 1
     let oldKey = oldChoice + '_votes_count'
     if (oldKey in state.currentLevel) {
       state.currentLevel[oldKey] -= 1
       if (activeLerp) {
         activeLerp.startValues[oldChoice] -= 1
       }
+      state.currentLevelVotesDisplayValues[oldChoice] -= 1
     }
   },
   setCurrentVote (state, newCurrentVote) {

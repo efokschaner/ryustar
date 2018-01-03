@@ -220,7 +220,7 @@ def handle_update_level_counts():
     if cur_level is None:
         cur_level_dict = None
     else:
-        cur_level_dict = cur_level.to_client_model_exact()
+        cur_level_dict = cur_level.to_client_model_fast()
     pubsub.publish('level-updates-topic', cur_level_dict)
     return ('', 200)
 

@@ -37,7 +37,7 @@ class ShardedCounter(FancyModel):
         total = 0
         for shard in ndb.get_multi(self.keys):
             total += shard.count
-        memcache.add(self._get_memcache_key(), total, 60)
+        memcache.add(self._get_memcache_key(), total, 30)
         return total
 
     @ndb.transactional

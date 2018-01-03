@@ -62,7 +62,7 @@ function updateLerp ({commit, state}) {
     }
     commit('setCurrentLevelVotesDisplayValues', newValues)
   }
-  setTimeout(() => updateLerp({commit, state}), 50)
+  setTimeout(() => updateLerp({commit, state}), 100)
 }
 
 function setCurrentLevel (state, newCurrentLevel) {

@@ -24,7 +24,8 @@ function createTopicSubscription (topicName, subscriptionName) {
 class WebSocketBroadCastServer {
   constructor () {
     this.httpServer = http.createServer(function (request, response) {
-      response.writeHead(404)
+      // Default readycheck from GCP goes to / and expects 200
+      response.writeHead(200)
       response.end()
     })
     this.wsServer = new WebSocketServer({

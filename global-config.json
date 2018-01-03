@@ -8,13 +8,15 @@
     "env-var-pusub-emulator-host-key": "PUBSUB_EMULATOR_HOST",
     "env-var-pusub-emulator-host-value": "gcloud-pubsub-service:9002",
     "env-var-gcloud-project-key": "GCLOUD_PROJECT",
-    "env-var-gcloud-project-value": "None"
+    "env-var-gcloud-project-value": "None",
+    "websocket-service-deployment-replicas": 1
   },
   "gcloud": {
     "websocket-service-container-image": "gcr.io/studious-osprey-189923/websocket-service:latest",
     "env-var-pusub-emulator-host-key": "NO_PUBSUB_EMULATOR_HOST",
     "env-var-pusub-emulator-host-value": "",
-    "env-var-gcloud-project-key": "NO_OVERRIDE_GCLOUD_PROJECT",
-    "env-var-gcloud-project-value": ""
+    "env-var-gcloud-project-key": "GCLOUD_PROJECT",
+    "env-var-gcloud-project-value": "studious-osprey-189923",
+    "websocket-service-deployment-replicas": 3
   }
 }

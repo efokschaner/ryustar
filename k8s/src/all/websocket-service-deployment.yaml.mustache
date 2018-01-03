@@ -1,21 +1,10 @@
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: websocket-service
-spec:
-  ports:
-  - port: {{ websocket-service-service-listen-port }}
-    targetPort: {{ websocket-service-container-listen-port }}
-  selector:
-    app: ryustar-websocket-service-app
----
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: ryustar-websocket-service-deployment
 spec:
-  replicas: 1
+  replicas: {{ websocket-service-deployment-replicas }}
   selector:
     matchLabels:
       app: ryustar-websocket-service-app
@@ -27,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ryustar-websocket-service
-        image: {{ websocket-service-container-image }}
+        image: {{ &websocket-service-container-image }}
         env:
         - name: LISTEN_PORT
           value: "{{ websocket-service-container-listen-port }}"
@@ -37,3 +26,9 @@ spec:
           value: "{{ env-var-gcloud-project-value }}"
         ports:
         - containerPort: {{ websocket-service-container-listen-port }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ websocket-service-container-listen-port }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 5

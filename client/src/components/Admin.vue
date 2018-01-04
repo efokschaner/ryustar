@@ -89,4 +89,7 @@ li {
 a {
   color: #42b983;
 }
+.admin {
+  margin-top: 60px;
+}
 </style>

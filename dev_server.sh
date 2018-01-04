@@ -11,4 +11,6 @@ WEBSOCKET_CONTAINER_IMAGE=$(jq --raw-output '(.base + .minikube)."websocket-serv
 eval $(minikube docker-env)
 docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 
-kubectl apply -f k8s/dist/minikube
+docker build -t dev-appserver-proxy:local-dev dev-appserver-proxy
+
+kubectl apply --context="minikube" -f k8s/dist/minikube

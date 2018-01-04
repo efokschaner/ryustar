@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-service
+spec:
+  type: NodePort # GKE only supports GCP load balancers to NodePort services /shrug
+  ports:
+  - port: {{ websocket-service-service-listen-port }}
+    targetPort: {{ websocket-service-container-listen-port }}
+  selector:
+    app: ryustar-websocket-service-app

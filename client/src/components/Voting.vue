@@ -1,4 +1,3 @@
-
 <template>
   <div class="voting">
     <img src="src/assets/ryukahr_logo.png" class="ryulogo">
@@ -11,11 +10,11 @@
       <div class="votes-container">
         <div class="votes-item">
           <img src="src/assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('star')"/> 
-          <p class="votes-text">{{currentLevel.star_votes_count}} votes ({{ starVotesPercent }}%)</p>
+          <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
         </div>
         <div class="votes-item">
           <img src="src/assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('garbage')"/>
-          <p class="votes-item-text">{{currentLevel.garbage_votes_count}} votes ({{ garbageVotesPercent }}%)</p>
+          <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
         </div>
       </div>
     </div>
@@ -38,24 +37,23 @@ export default {
   },
   computed: {
     starVotesPercent () {
-      let curLevel = this.$store.state.currentLevel
-      let totalVotes = curLevel.star_votes_count + curLevel.garbage_votes_count
+      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
       if (totalVotes === 0) {
         return 0
       }
-      return Math.round(100 * curLevel.star_votes_count / totalVotes)
+      return Math.round(100 * this.currentLevelVotesDisplayValues.star / totalVotes)
     },
     garbageVotesPercent () {
-      let curLevel = this.$store.state.currentLevel
-      let totalVotes = curLevel.star_votes_count + curLevel.garbage_votes_count
+      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
       if (totalVotes === 0) {
         return 0
       }
-      return Math.round(100 * curLevel.garbage_votes_count / totalVotes)
+      return Math.round(100 * this.currentLevelVotesDisplayValues.garbage / totalVotes)
     },
     ...mapState([
       'currentLevel',
-      'currentVote'
+      'currentVote',
+      'currentLevelVotesDisplayValues'
     ]),
     ...mapGetters([
       'noLevelInProgress'

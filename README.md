@@ -14,12 +14,12 @@ Built using Google App Engine, Google Container Engine, Flask, Vue.js
 Assuming you have a minikube cluster running, do the following:
 - Add entries for:
   - `www.ryustar.invalid`
-  - `ws.ryustar.invalid`
+  - `gke.ryustar.invalid`
   - `gae-admin.ryustar.invalid`
 
   to your hosts file using your minikube ip, which you can get with `minikube ip`. eg.
 
-      192.168.64.6 www.ryustar.invalid ws.ryustar.invalid gae-admin.ryustar.invalid
+      192.168.64.6 www.ryustar.invalid gke.ryustar.invalid gae-admin.ryustar.invalid
 
   You'll need to update this each time your minikube ip changes (eg. on restart)
 - Enable the ingress addon:
@@ -55,6 +55,8 @@ yarn run dev
 #### Prerequisites
 - `gcloud` (Google Cloud SDK) is installed and configured correctly
 - `kubectl` is installed. You can get it via `gcloud components install kubectl`
+- `gcloud container clusters get-credentials ryustar-cluster-0 --zone us-central1-a`
+
 ``` bash
 ./deploy.sh
 ```
@@ -93,3 +95,42 @@ You'll also need Docker for your platform: https://store.docker.com/
 Get minikube up and running to use the rest of this readme:
 
     minikube start
+
+### GKE notes
+Manually creating nodepool with necessary pubsub auth scope:
+
+    gcloud container node-pools create node-pool-0 --cluster=ryustar-cluster-0 --disk-size=10 --enable-autoupgrade --machine-type=f1-micro --num-nodes=3 --zone=us-central1-a --scopes=gke-default,pubsub
+
+
+Before any other clusterrole configs can be made:
+
+    kubectl create clusterrolebinding CHOOSE_A_FILENAME-cluster-admin-binding --clusterrole=cluster-admin --user=<YOUR_USERNAME>
+
+Install latest dashboard:
+- Disable built in kube dash in GCP Console
+- kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+
+Production dashboard:
+
+    kubectl proxy
+
+http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/
+
+Get token from access-token in ~/.kube/config
+
+#### Ingress creation woes
+Try creating ingress WITHOUT these annotation first otherwise it gets stuck "creating ingress"
+
+    # kubernetes.io/ingress.allow-http: "false"
+    # kubernetes.io/tls-acme: "true"
+
+Might need to create a fake TLS cert to allow bootstrapping kube-lego and its self-check:
+
+    openssl req -x509 -nodes -days 1 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=gke.ryustar.io/O=gke.ryustar.io"
+    kubectl create secret tls gke-ryustar-io-certificate --key tls.key --cert tls.crt
+
+In fact maybe this second "fix" is what was breaking the initial deploy...
+
+Manual updates to lb for websockets because gce ingress does not support this configuration from kubernetes:
+Access the backend services in the "advanced menu" of Load Balancing section of the web console
+Set timeout to 1h (3600s)

@@ -1,4 +1,5 @@
 let http = require('http')
+let os = require('os')
 
 let PubSub = require('@google-cloud/pubsub')
 let uuidv4 = require('uuid/v4')
@@ -23,7 +24,8 @@ function createTopicSubscription (topicName, subscriptionName) {
 class WebSocketBroadCastServer {
   constructor () {
     this.httpServer = http.createServer(function (request, response) {
-      response.writeHead(404)
+      // Default readycheck from GCP goes to / and expects 200
+      response.writeHead(200)
       response.end()
     })
     this.wsServer = new WebSocketServer({
@@ -37,8 +39,8 @@ class WebSocketBroadCastServer {
   listen (serverPort) {
     return new Promise((resolve, reject) => {
       this.httpServer.listen(serverPort, () => {
-        let address = this.httpServer.address();
-        console.log('HTTP server is listening on ', address);
+        let address = this.httpServer.address()
+        console.log('HTTP server is listening on ', address)
         resolve(address)
       })
       this.httpServer.on('error', (err) => {
@@ -53,7 +55,7 @@ class WebSocketBroadCastServer {
 
   shutDown () {
     this.wsServer.shutDown()
-    this.httpServer.shutDown()
+    this.httpServer.close()
   }
 
   _handleWebsocketUpgradeRequest (request) {
@@ -66,16 +68,17 @@ class WebSocketBroadCastServer {
     wsConnection.on('message', function (message) {
       // For now we're not expecting any client-to-server messages
       // If we receive one, assume the client is misbehaving and close the connection
-      wsConnection.clos()
+      wsConnection.close()
     })
 
     wsConnection.on('close', function (reasonCode, description) {
-      console.log('WebSocket client ' + wsConnection.remoteAddress + ' disconnected.');
+      // console.log('WebSocket client ' + wsConnection.remoteAddress + ' disconnected.')
     })
   }
 
   _originIsAllowed (origin) {
     // put logic here to detect whether the specified origin is allowed.
+    // I see no reason for this public s2c-only endpoint to have any origin restrictions.
     return true
   }
 }
@@ -85,14 +88,16 @@ async function main () {
   let listenPort = parseInt(listenPortString)
   let server = new WebSocketBroadCastServer()
   await server.listen(listenPort)
-  let subscriptionId = uuidv4()
+  // Subscription ids must start with a letter and have other constraints
+  // see https://github.com/googleapis/googleapis/blob/f0f1588a68ad2c58ea2e9352b083e04a20859d3c/google/pubsub/v1/pubsub.proto#L406
+  let subscriptionId = `s-${os.hostname()}-${uuidv4()}`
   let subscription = await createTopicSubscription('level-updates-topic', subscriptionId)
 
-  async function handleShutdown (signal) {
+  async function handleShutdown () {
     // Here we try to gracefully shutdown. Including deleting our dynamic subscription
     // from gcloud pubsub. Of course this is not guaranteed to work and so we should implement a
     // cron to clean up those subscriptions somehow.
-    console.log(`Received ${signal}. Shutting down.`)
+    console.log('Received signal. Shutting down.')
     server.shutDown()
     await subscription.close()
     await subscription.delete()

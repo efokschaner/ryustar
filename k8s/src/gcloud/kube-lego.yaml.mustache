@@ -1,0 +1,102 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-lego
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-lego-serviceaccount
+  namespace: kube-lego
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: kube-lego-clusterrole
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - list
+  - get
+  - create
+  - update
+  - delete
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - services
+  - secrets
+  verbs:
+  - get
+  - create
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-lego-clusterrole-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-lego-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: kube-lego-serviceaccount
+    namespace: kube-lego
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kube-lego
+  namespace: kube-lego
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kube-lego
+    spec:
+      serviceAccountName: kube-lego-serviceaccount
+      containers:
+      - name: kube-lego
+        image: jetstack/kube-lego:0.1.5
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: LEGO_LOG_LEVEL
+          value: debug  # less verbose: info
+        - name: LEGO_EMAIL
+          value: eddyaod@gmail.com
+        # LEGO_URL for staging: https://acme-staging.api.letsencrypt.org/directory
+        # When switching between staging and prod, you should also delete the current kube-lego-account secret
+        # `kubectl delete secret kube-lego-account -n kube-lego`
+        - name: LEGO_URL
+          value: https://acme-v01.api.letsencrypt.org/directory
+        - name: LEGO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: LEGO_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 50Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 1

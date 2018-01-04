@@ -3,15 +3,20 @@ kind: Ingress
 metadata:
   name: ryustar-ingress
   annotations:
-    kubernetes.io/ingress.allow-http: "false"
-    kubernetes.io/tls-acme: "true"
     kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "ryustar-gke-ingress-ip-0"
+    # kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/tls-acme: "true"
 spec:
-  backend:
-    serviceName: websocket-service
-    servicePort: {{ websocket-service-service-listen-port }}
-  # todo https://danrl.com/blog/2017/google-kubernetes-engine-and-lets-encrypt/
-  # tls:
-  # - hosts:
-  #   - test.danrl.com
-  #     secretName: test-danrl-com-certificate
+  rules:
+  - host: gke.ryustar.io
+    http:
+      paths:
+      - path: /websocket
+        backend:
+          serviceName: websocket-service
+          servicePort: {{ websocket-service-service-listen-port }}
+  tls:
+  - hosts:
+    - gke.ryustar.io
+    secretName: gke-ryustar-io-certificate

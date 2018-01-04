@@ -1,21 +1,20 @@
 <template>
   <div class="voting">
+    <img src="src/assets/ryukahr_logo.png" class="ryulogo">
     <div v-if="noLevelInProgress">
       <h2>No Level</h2>
       <p>Looks like Ryukahr is not playing a level at the moment</p>
     </div>
     <div v-else-if="currentLevel">
-      <h2>Vote on the level: {{currentLevel.name_ish}}</h2>
+      <h2 class="current-level-header">Vote on the level: {{currentLevel.name_ish }}</h2>
       <div class="votes-container">
         <div class="votes-item">
-          <h3>Star</h3>
-          <p>{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
-          <a v-if="!hasVoted('star')" class="vote-link" v-on:click.prevent="performVote('star')">Vote</a>
+          <img src="src/assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('star')"/> 
+          <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
         </div>
-        <div>
-          <h3>Garbage</h3>
-          <p>{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
-          <a v-if="!hasVoted('garbage')" class="vote-link" v-on:click.prevent="performVote('garbage')">Vote</a>
+        <div class="votes-item">
+          <img src="src/assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('garbage')"/>
+          <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
         </div>
       </div>
     </div>
@@ -73,8 +72,17 @@ export default {
 </script>
 
 <style scoped>
+@import 'https://fonts.googleapis.com/css?family=Bowlby+One+SC';
+.voting {
+  height: 100vh;
+  background-image: url("/src/assets/wallpaper.png");
+  background-repeat:no-repeat;
+  background-size:cover;
+  font-family: 'Bowlby One SC', Helvetica, sans-serif;
+}
 h1, h2 {
   font-weight: normal;
+  text-shadow: 2px 2px 5px red;
 }
 ul {
   list-style-type: none;
@@ -83,12 +91,14 @@ ul {
 li {
   display: inline-block;
   margin: 0 10px;
+  
 }
 a {
-  color: #42b983;
+  color: #be3535;
 }
-.vote-link {
-  cursor: pointer;
+.current-level-header {
+  font-size: 7;
+  color: "#000000";
 }
 .votes-container{
   display: flex;
@@ -98,5 +108,54 @@ a {
 }
 .votes-item {
   padding: 10px;
+}
+.vote-image {
+  border-radius: 15px;
+  background: rgb(56, 60, 77);
+  padding: 20px; 
+  width: 200px;
+  height: 200px;
+  cursor: pointer;
+  box-shadow: 3px 10px;
+  color:#be3535;
+}
+.votes-item-text {
+  font-size: 4
+}
+@keyframes bounceIn {
+  from, 20%, 40%, 60%, 80%, to {
+    animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+  }
+
+  0% {
+    opacity: 0;
+    transform: scale3d(.3, .3, .3);
+  }
+
+  20% {
+    transform: scale3d(1.1, 1.1, 1.1);
+  }
+
+  40% {
+    transform: scale3d(.9, .9, .9);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale3d(1.03, 1.03, 1.03);
+  }
+
+  80% {
+    transform: scale3d(.97, .97, .97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+.bounceIn {
+  animation-duration: .75s;
+  animation-name: bounceIn;
 }
 </style>

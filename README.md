@@ -101,7 +101,6 @@ Manually creating nodepool with necessary pubsub auth scope:
 
     gcloud container node-pools create node-pool-0 --cluster=ryustar-cluster-0 --disk-size=10 --enable-autoupgrade --machine-type=f1-micro --num-nodes=3 --zone=us-central1-a --scopes=gke-default,pubsub
 
-
 Before any other clusterrole configs can be made:
 
     kubectl create clusterrolebinding CHOOSE_A_FILENAME-cluster-admin-binding --clusterrole=cluster-admin --user=<YOUR_USERNAME>

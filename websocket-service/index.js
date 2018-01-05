@@ -84,6 +84,7 @@ class WebSocketBroadCastServer {
 }
 
 async function main () {
+  console.log('websocket-service startup: ', JSON.stringify(process.env))
   let listenPortString = process.argv[2] || process.env.LISTEN_PORT || '9090'
   let listenPort = parseInt(listenPortString)
   let server = new WebSocketBroadCastServer()

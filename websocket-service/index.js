@@ -5,6 +5,8 @@ let PubSub = require('@google-cloud/pubsub')
 let uuidv4 = require('uuid/v4')
 let WebSocketServer = require('websocket').server
 
+let logger = require('./logger')
+
 process.on('unhandledRejection', error => {
   throw error
 })
@@ -16,7 +18,7 @@ function createTopicSubscription (topicName, subscriptionName) {
     messageRetentionDuration: 10 * 60 // seconds
   }).then((results) => {
     const subscription = results[0]
-    console.log(`Subscription ${subscription.name} created.`)
+    logger.info(`Subscription ${subscription.name} created.`)
     return subscription
   })
 }
@@ -40,7 +42,7 @@ class WebSocketBroadCastServer {
     return new Promise((resolve, reject) => {
       this.httpServer.listen(serverPort, () => {
         let address = this.httpServer.address()
-        console.log('HTTP server is listening on ', address)
+        logger.info('HTTP server is listening', {address})
         resolve(address)
       })
       this.httpServer.on('error', (err) => {
@@ -61,7 +63,7 @@ class WebSocketBroadCastServer {
   _handleWebsocketUpgradeRequest (request) {
     if (!this._originIsAllowed(request.origin)) {
       request.reject()
-      console.log('Connection from origin ' + request.origin + ' rejected.')
+      logger.info(`Connection from origin ${request.origin} rejected.`)
       return
     }
     let wsConnection = request.accept(undefined, request.origin)
@@ -72,7 +74,7 @@ class WebSocketBroadCastServer {
     })
 
     wsConnection.on('close', function (reasonCode, description) {
-      // console.log('WebSocket client ' + wsConnection.remoteAddress + ' disconnected.')
+      // logger.info(`WebSocket client ${wsConnection.remoteAddress} disconnected.`)
     })
   }
 
@@ -84,7 +86,7 @@ class WebSocketBroadCastServer {
 }
 
 async function main () {
-  console.log('websocket-service startup: ', JSON.stringify(process.env))
+  logger.info('websocket-service starting', {env: process.env})
   let listenPortString = process.argv[2] || process.env.LISTEN_PORT || '9090'
   let listenPort = parseInt(listenPortString)
   let server = new WebSocketBroadCastServer()
@@ -98,7 +100,7 @@ async function main () {
     // Here we try to gracefully shutdown. Including deleting our dynamic subscription
     // from gcloud pubsub. Of course this is not guaranteed to work and so we should implement a
     // cron to clean up those subscriptions somehow.
-    console.log('Received signal. Shutting down.')
+    logger.info('Received signal. Shutting down.')
     server.shutDown()
     await subscription.close()
     await subscription.delete()
@@ -108,7 +110,7 @@ async function main () {
   process.on('SIGTERM', handleShutdown)
 
   subscription.on('error', function (err) {
-    console.error('subscriptions error:', err)
+    logger.error(`subscriptions error: ${err}`)
   })
 
   function onMessage (message) {
@@ -119,7 +121,7 @@ async function main () {
 
   subscription.on('message', onMessage)
 
-  console.info('websocket-service is fully initialised')
+  logger.info('websocket-service is fully initialised')
 }
 
 if (require.main === module) {

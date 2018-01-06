@@ -3,9 +3,6 @@ set -o nounset
 set -o errexit
 set -o verbose
 
-# Deletes all files and folders that match the .gitignore (uncommited stuff that is tracked is let alone)
-git clean -f -d -X
-
 # Builds
 k8s/build.sh
 

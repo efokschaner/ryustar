@@ -17,6 +17,6 @@
     "env-var-pusub-emulator-host-value": "",
     "env-var-gcloud-project-key": "GCLOUD_PROJECT",
     "env-var-gcloud-project-value": "studious-osprey-189923",
-    "websocket-service-deployment-replicas": 3
+    "websocket-service-deployment-replicas": 2
   }
 }

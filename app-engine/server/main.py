@@ -167,9 +167,9 @@ def handle_create_user(user_id):
     # first verify the captcha if needed:
     conf = config.PersistentConfig.get_singleton()
     if conf.server_recaptcha_enabled:
-        recaptcha_response = request.form['g-recaptcha-response']
+        recaptcha_response = request.form.get('g-recaptcha-response')
         if not recaptcha_response:
-            return 'Missing recaptcha response', 400
+            return 'Missing g-recaptcha-response', 400
         verify_payload = urllib.urlencode({
             'secret': conf.recaptcha_secret_key,
             'response': recaptcha_response,
@@ -246,13 +246,13 @@ def commit_vote(user_id, choice, level_key):
 @app.route('/api/vote', methods=['POST'])
 def handle_vote():
     logging.debug('DOING THE OTHER THING')
-    user_id = request.form['user_id']
+    user_id = request.form.get('user_id')
     if not user_id:
         return 'Missing user_id', 400
-    choice = request.form['choice']
+    choice = request.form.get('choice')
     if not choice:
         return 'Missing choice', 400
-    urlsafe_level_key = request.form['level_key']
+    urlsafe_level_key = request.form.get('level_key')
     if not urlsafe_level_key:
         return 'Missing level_key', 400
     level_key = ndb.Key(urlsafe=urlsafe_level_key)
@@ -279,7 +279,7 @@ def handle_end_current_level():
 
 @app.route('/api/admin/publish-endpoint', methods=['POST'])
 def handle_publish_endpoint():
-    url = request.form['url']
+    url = request.form.get('url')
     if not url:
         return 'Missing url', 400
 
@@ -298,7 +298,7 @@ def handle_publish_endpoint():
 
 @app.route('/api/admin/increase-current-level-total-counter-shards', methods=['POST'])
 def handle_increase_current_level_total_counter_shards():
-    total_shards = request.form['total_shards']
+    total_shards = request.form.get('total_shards')
     if not total_shards:
         return 'Missing total_shards', 400
     total_shards_int = int(total_shards)

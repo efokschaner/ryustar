@@ -47,6 +47,10 @@ store.watch(
     return state.websocketHasError
   },
   function (websocketHasError) {
-    Vue.toasted.global.genericError('The connection to the updates server is failing. The information on the page may be stale.')
+    if (websocketHasError) {
+      Vue.toasted.global.genericError(
+        { message: 'The connection to the updates server is failing. The information on the page may be stale.' }
+      )
+    }
   }
 )

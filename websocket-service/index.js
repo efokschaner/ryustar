@@ -94,7 +94,7 @@ async function main () {
   // Subscription ids must start with a letter and have other constraints
   // see https://github.com/googleapis/googleapis/blob/f0f1588a68ad2c58ea2e9352b083e04a20859d3c/google/pubsub/v1/pubsub.proto#L406
   let subscriptionId = `s-${os.hostname()}-${uuidv4()}`
-  let subscription = await createTopicSubscription('level-updates-topic', subscriptionId)
+  let subscription = await createTopicSubscription('ryustar-io-endpoints-topic', subscriptionId)
 
   async function handleShutdown () {
     // Here we try to gracefully shutdown. Including deleting our dynamic subscription

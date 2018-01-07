@@ -6,15 +6,43 @@
       <p>Looks like Ryukahr is not playing a level at the moment</p>
     </div>
     <div v-else-if="currentLevel">
-      <h2 class="current-level-header">Vote on the level: {{currentLevel.name_ish }}</h2>
-      <div class="votes-container">
-        <div class="votes-item">
-          <img src="src/assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('star')"/> 
-          <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
-        </div>
-        <div class="votes-item">
-          <img src="src/assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('garbage')"/>
-          <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
+      <div v-if="captchaConsentResolveCallback">
+        <vue-recaptcha
+            style="display: none"
+            ref="invisibleRecaptcha"
+            badge="inline"
+            size="invisible"
+            theme="dark"
+            :sitekey="config.recaptcha_site_key"
+            @verify="onCaptchaVerify"
+            @expired="onCaptchaExpired">
+        </vue-recaptcha>
+        <h3>This site uses Invisible ReCAPTCHA</h3>
+        <p>To make sure that votes aren't being submitted by robots,
+          this page uses Google's Invisible reCAPTCHA system for verifying that you are not a robot,
+          or not a robot lacking human intelligence at least!
+          reCAPTCHA works by "collecting hardware and software information,
+          such as device and application data and the results of integrity checks,
+          and sending that data to Google for analysis".
+          Your use of Invisible reCAPTCHA is subject to Google's
+          <a href="https://www.google.com/policies/privacy/">Privacy Policy</a> and
+          <a href="https://www.google.com/policies/terms/">Terms of Use</a>
+          Do you accept these terms, to continue with your vote?
+        </p>
+        <button @click="onRefusedCaptcha()">No thanks! I'll just spectate.</button>
+        <button @click="onConsentToCaptcha()">I accept these terms and wish to vote!</button>
+      </div>
+      <div v-else>
+        <h2 class="current-level-header">Vote on the level: {{currentLevel.name_ish }}</h2>
+        <div class="votes-container">
+          <div class="votes-item">
+            <img src="src/assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('star')"/>
+            <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
+          </div>
+          <div class="votes-item">
+            <img src="src/assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('garbage')"/>
+            <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
+          </div>
         </div>
       </div>
     </div>
@@ -26,16 +54,30 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from 'vuex'
+import VueRecaptcha from 'vue-recaptcha'
 export default {
   name: 'Voting',
+  components: { VueRecaptcha },
   created () {
-    return this.$store.dispatch('fetchCurrentLevel').then(() => this.$store.dispatch('fetchCurrentVote'))
+    return Promise.all([
+      this.fetchCurrentLevel(),
+      this.fetchCurrentUser()
+        .then(() => this.fetchCurrentVote())
+    ])
+    .catch((err) => {
+      this.$toasted.global.genericError()
+      throw err
+    })
   },
   data () {
     return {
+      captchaConsentResolveCallback: null
     }
   },
   computed: {
+    hasVoted (choice) {
+      return this.currentVote && (this.currentVote.choice === choice)
+    },
     starVotesPercent () {
       let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
       if (totalVotes === 0) {
@@ -51,6 +93,8 @@ export default {
       return Math.round(100 * this.currentLevelVotesDisplayValues.garbage / totalVotes)
     },
     ...mapState([
+      'config',
+      'currentUser',
       'currentLevel',
       'currentVote',
       'currentLevelVotesDisplayValues'
@@ -60,17 +104,67 @@ export default {
     ])
   },
   methods: {
-    hasVoted (choice) {
-      let curVote = this.$store.state.currentVote
-      return curVote && (curVote.choice === choice)
+    onConsentToCaptcha () {
+      this.$refs.invisibleRecaptcha.execute()
+    },
+    onRefusedCaptcha () {
+      this.captchaConsentResolveCallback({ hasConsent: false })
+    },
+    onCaptchaVerify (response) {
+      this.captchaConsentResolveCallback({ hasConsent: true, recaptchaResponse: response })
+    },
+    onCaptchaExpired () {
+      console.warn('Captcha expired')
+      if (this.captchaConsentResolveCallback) {
+        this.captchaConsentResolveCallback({ hasConsent: false })
+      }
+    },
+    // Returns { hasConsent: boolean, recaptchaResponse: string? }
+    async ensureConsent () {
+      if (this.currentUser) {
+        return { hasConsent: true }
+      }
+      if (!this.config.client_recaptcha_enabled) {
+        return { hasConsent: true }
+      }
+      try {
+        await new Promise((resolve) => {
+          this.captchaConsentResolveCallback = resolve
+        })
+      } finally {
+        this.captchaConsentResolveCallback = null
+      }
+    },
+    async ensureUser () {
+      if (this.currentUser) {
+        return
+      }
+      let { hasConsent, recaptchaResponse } = await this.ensureConsent()
+      if (hasConsent) {
+        return this.createUser({recaptchaResponse})
+      }
+    },
+    async submitVote (choice) {
+      try {
+        await this.ensureUser()
+        if (this.currentUser) {
+          return this.performVote(choice)
+        }
+      } catch (err) {
+        this.$toasted.global.genericError()
+        throw err
+      }
     },
     ...mapActions([
+      'createUser',
+      'fetchCurrentUser',
+      'fetchCurrentLevel',
+      'fetchCurrentVote',
       'performVote'
     ])
   }
 }
 </script>
-
 <style scoped>
 @import 'https://fonts.googleapis.com/css?family=Bowlby+One+SC';
 .voting {
@@ -79,9 +173,9 @@ export default {
   background-repeat:no-repeat;
   background-size:cover;
   font-family: 'Bowlby One SC', Helvetica, sans-serif;
+  text-align: center;
 }
 h1, h2 {
-  font-weight: normal;
   text-shadow: 2px 2px 5px red;
 }
 ul {
@@ -91,7 +185,6 @@ ul {
 li {
   display: inline-block;
   margin: 0 10px;
-  
 }
 a {
   color: #be3535;
@@ -112,7 +205,7 @@ a {
 .vote-image {
   border-radius: 15px;
   background: rgb(56, 60, 77);
-  padding: 20px; 
+  padding: 20px;
   width: 200px;
   height: 200px;
   cursor: pointer;

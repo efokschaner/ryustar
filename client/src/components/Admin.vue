@@ -37,7 +37,10 @@ export default {
     }
   },
   created () {
-    return this.$store.dispatch('fetchCurrentLevel')
+    return this.$store.dispatch('fetchCurrentLevel').catch((err) => {
+      this.$toasted.global.genericError()
+      throw err
+    })
   },
   methods: {
     async startNewLevel () {

@@ -1,4 +1,5 @@
 import { fetchJson } from '../fetch.js'
+import { initWebsocketForStore } from './websocket'
 
 import Vue from 'vue'
 import Vuex from 'vuex'
@@ -27,6 +28,8 @@ function getUserId () {
 }
 
 let state = {
+  config: null,
+  currentUser: null,
   currentLevel: null,
   hasSetCurrentLevel: false,
   currentVote: null,
@@ -38,7 +41,7 @@ let state = {
 }
 
 let getters = {
-  noLevelInProgress: state => {
+  noLevelInProgress (state) {
     return state.hasSetCurrentLevel && !state.currentLevel
   }
 }
@@ -88,6 +91,12 @@ function setCurrentLevel (state, newCurrentLevel) {
 }
 
 let mutations = {
+  setConfig (state, newConfig) {
+    state.config = newConfig
+  },
+  setCurrentUser (state, newCurrentUser) {
+    state.currentUser = newCurrentUser
+  },
   setCurrentLevel,
   applyPredicitonToCurrentLevel (state, {oldChoice, newChoice}) {
     state.currentLevel[newChoice + '_votes_count'] += 1
@@ -116,43 +125,66 @@ let mutations = {
   }
 }
 
-let pendingCurrentLevelRequest = null
-function fetchCurrentLevel ({ commit }) {
-  if (pendingCurrentLevelRequest) {
-    return pendingCurrentLevelRequest
+async function createUser ({ commit }, { recaptchaResponse }) {
+  let fetchBody = new URLSearchParams()
+  fetchBody.set('g-recaptcha-response', recaptchaResponse)
+  let fetchOptions = {
+    method: 'POST',
+    body: fetchBody
   }
-  async function fetchCurrentLevelInternal () {
-    let newCurrentLevel = await fetchJson('/api/level/current')
-    commit('setCurrentLevel', newCurrentLevel)
-    pendingCurrentLevelRequest = null
-    return newCurrentLevel
-  }
-  pendingCurrentLevelRequest = fetchCurrentLevelInternal()
-  return pendingCurrentLevelRequest
+  let newCurrentUser = await fetchJson(`/api/user/${getUserId()}/create`, fetchOptions)
+  commit('setCurrentUser', newCurrentUser)
+  return newCurrentUser
 }
 
-let pendingCurrentVoteRequest = null
-function fetchCurrentVote ({ commit, state }) {
-  if (pendingCurrentVoteRequest) {
-    return pendingCurrentVoteRequest
+function dedupedAsyncCall (func) {
+  let pendingPromise = null
+  return function () {
+    if (!pendingPromise) {
+      pendingPromise = func.apply(this, arguments)
+      pendingPromise.finally(() => { pendingPromise = null })
+    }
+    return pendingPromise
   }
-  async function fetchCurrentVoteInternal () {
-    let newCurrentVote = await fetchJson('/api/vote/' + getUserId())
-    commit('setCurrentVote', newCurrentVote)
-    pendingCurrentVoteRequest = null
-    return newCurrentVote
-  }
-  pendingCurrentVoteRequest = fetchCurrentVoteInternal()
-  return pendingCurrentVoteRequest
 }
+
+let fetchConfig = dedupedAsyncCall(async function ({ commit }) {
+  let newConfig = await fetchJson('/api/config')
+  commit('setConfig', newConfig)
+  return newConfig
+})
+
+let fetchCurrentUser = dedupedAsyncCall(async function ({ commit }) {
+  let newCurrentUser = await fetchJson(`/api/user/${getUserId()}`)
+  commit('setCurrentUser', newCurrentUser)
+  return newCurrentUser
+})
+
+let fetchCurrentLevel = dedupedAsyncCall(async function ({ commit }) {
+  let newCurrentLevel = await fetchJson('/api/level/current')
+  commit('setCurrentLevel', newCurrentLevel)
+  return newCurrentLevel
+})
+
+let fetchCurrentVote = dedupedAsyncCall(async function ({ commit, state }) {
+  if (!state.currentUser) {
+    return
+  }
+  let newCurrentVote = await fetchJson('/api/vote/' + state.currentUser.id)
+  commit('setCurrentVote', newCurrentVote)
+  return newCurrentVote
+})
 
 async function performVote ({ commit, state }, choice) {
+  if (!state.currentUser) {
+    throw new Error('Cant perform vote without a user id')
+  }
   let priorVoteChoice = null
   if (state.currentVote) {
     priorVoteChoice = state.currentVote.choice
   }
   let fetchBody = new URLSearchParams()
-  fetchBody.set('user_id', getUserId())
+  fetchBody.set('user_id', state.currentUser.id)
   fetchBody.set('choice', choice)
   fetchBody.set('level_key', state.currentLevel.key)
   let fetchOptions = {
@@ -168,6 +200,9 @@ async function performVote ({ commit, state }, choice) {
 }
 
 let actions = {
+  createUser,
+  fetchConfig,
+  fetchCurrentUser,
   fetchCurrentLevel,
   fetchCurrentVote,
   performVote,
@@ -187,5 +222,6 @@ let store = new Vuex.Store({
 })
 
 store.dispatch('updateLerp')
+initWebsocketForStore(store)
 
 export default store

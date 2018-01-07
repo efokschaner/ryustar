@@ -48,7 +48,7 @@ spec:
               - |
                 while true
                 do
-                  STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X PUT http://127.0.0.1:9001/v1/projects/None/topics/level-updates-topic)
+                  STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X PUT http://127.0.0.1:9001/v1/projects/None/topics/ryustar-io-endpoints-topic)
                   # 409 is ok as it likely means it already exists
                   if [ $STATUS -eq 200 ] || [ $STATUS -eq 409]; then
                     echo "Got $STATUS! All done!"

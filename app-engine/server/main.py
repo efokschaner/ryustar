@@ -1,13 +1,16 @@
 import datetime
+import json
 import logging
 import os
+import urllib
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, make_response, request
 
-from google.appengine.api import users, taskqueue
+from google.appengine.api import urlfetch, users
 from google.appengine.ext import ndb
 
 import config
+from flask_util import cache_for_seconds, get_view_function
 from ndb_util import FancyModel
 import pubsub
 from sharded_counter import ShardedCounter
@@ -56,10 +59,6 @@ class Level(FancyModel):
 class CurrentLevel(FancyModel):
     level_key = ndb.KeyProperty()
 
-    @classmethod
-    def get_singleton(cls):
-        return cls.get_or_insert('singleton')
-
 
 def set_current_level(level):
     cur_level = CurrentLevel.get_singleton()
@@ -68,7 +67,7 @@ def set_current_level(level):
     else:
         cur_level.level_key = level.key
     cur_level.put()
-    pubsub.schedule_push_current_level()
+    pubsub.schedule_publish_endpoint('/api/level/current')
 
 
 def get_current_level():
@@ -83,6 +82,18 @@ def finish_current_level():
     if cur_level is not None:
         cur_level.end_time = datetime.datetime.now()
         cur_level.put()
+
+
+class User(FancyModel):
+    creation_timestamp = ndb.DateTimeProperty(auto_now_add=True)
+
+    def to_client_model(self):
+        include = [
+            'creation_timestamp',
+        ]
+        user_dict = self.to_dict(include=include)
+        user_dict['id'] = self.key.id()
+        return user_dict
 
 
 class UserVote(FancyModel):
@@ -113,6 +124,7 @@ app = Flask(__name__)
 
 
 @app.route('/api/config')
+@cache_for_seconds(30)
 def handle_get_config():
     conf = config.PersistentConfig.get_singleton()
     client_conf = conf.to_client_model()
@@ -122,6 +134,7 @@ def handle_get_config():
 
 
 @app.route('/api/level/current')
+@cache_for_seconds(5)
 def handle_get_current_level():
     cur_level = get_current_level()
     if cur_level is None:
@@ -130,11 +143,61 @@ def handle_get_current_level():
 
 
 @app.route('/api/vote/<user_id>')
+@cache_for_seconds(10)
 def handle_get_current_vote(user_id):
     cur_vote = get_current_vote(user_id)
     if cur_vote is not None:
         cur_vote = cur_vote.to_dict()
     return jsonify(cur_vote)
+
+
+@app.route('/api/user/<user_id>')
+@cache_for_seconds(10)
+def handle_get_user(user_id):
+    maybe_user = User.get_by_id(user_id)
+    if maybe_user:
+        user = maybe_user.to_client_model()
+    else:
+        user = None
+    return jsonify(user)
+
+
+@app.route('/api/user/<user_id>/create', methods=['POST'])
+def handle_create_user(user_id):
+    # first verify the captcha if needed:
+    conf = config.PersistentConfig.get_singleton()
+    if conf.server_recaptcha_enabled:
+        recaptcha_response = request.form['g-recaptcha-response']
+        if not recaptcha_response:
+            return 'Missing recaptcha response', 400
+        verify_payload = urllib.urlencode({
+            'secret': conf.recaptcha_secret_key,
+            'response': recaptcha_response,
+            'remoteip': os.environ.get('REMOTE_ADDR', '')
+        })
+        verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        verify_response = urlfetch.fetch(
+            verify_url,
+            deadline=10, # seconds
+            method=urlfetch.POST,
+            payload=verify_payload,
+            headers={ 'Content-Type': 'application/x-www-form-urlencoded' },
+            validate_certificate=True
+        )
+        if (not verify_response) or verify_response.status_code != 200:
+            error_message = 'HTTP {} returned from POST to {}\n response={}'.format(
+                verify_response.status_code,
+                verify_url,
+                repr(verify_response.__dict__)
+            )
+            raise Exception(error_message)
+        verify_response_payload = json.loads(verify_response.content)
+        if not verify_response_payload['success']:
+            logging.info('Failed recaptcha: {}'.format(verify_response.content))
+            return 'Recaptcha did not pass verification', 400
+
+    user = User.get_or_insert(user_id)
+    return jsonify(user.to_client_model())
 
 
 class CommitVoteResult(object):
@@ -195,7 +258,7 @@ def handle_vote():
     level_key = ndb.Key(urlsafe=urlsafe_level_key)
     commit_vote_result = commit_vote(user_id, choice, level_key)
     if commit_vote_result.counts_need_update:
-        pubsub.schedule_push_current_level()
+        pubsub.schedule_publish_endpoint('/api/level/current')
     return commit_vote_result.flask_response
 
 
@@ -214,14 +277,22 @@ def handle_end_current_level():
     return ('', 200)
 
 
-@app.route('/api/admin/update-and-broadcast-level-counts', methods=['POST'])
-def handle_update_level_counts():
-    cur_level = get_current_level()
-    if cur_level is None:
-        cur_level_dict = None
-    else:
-        cur_level_dict = cur_level.to_client_model_fast()
-    pubsub.publish('level-updates-topic', cur_level_dict)
+@app.route('/api/admin/publish-endpoint', methods=['POST'])
+def handle_publish_endpoint():
+    url = request.form['url']
+    if not url:
+        return 'Missing url', 400
+
+    func_and_arg_data = get_view_function(app, url)
+    if not func_and_arg_data:
+        return 'Could not get func for url {}'.format(url), 400
+    func = func_and_arg_data[0]
+    resp = make_response(func())
+    publish_payload = {
+        'url': url,
+        'body': resp.get_data()
+    }
+    pubsub.publish('ryustar-io-endpoints-topic', publish_payload)
     return ('', 200)
 
 

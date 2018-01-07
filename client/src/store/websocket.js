@@ -37,7 +37,7 @@ export function initWebsocketForStore (store) {
               () => {
                 store.commit('setConfig', JSON.parse(body))
               },
-              Math.random() * 30
+              Math.random() * 30 * 1000
             )
           } else {
             throw new Error(`Unrecognised url received from websocket: ${url} , evt: ${evt.data}`)

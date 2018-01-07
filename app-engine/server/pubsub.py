@@ -27,7 +27,7 @@ def schedule_publish_endpoint(url):
 
 
 def publish(topic_name, message_data_object):
-    pubsub_emulator_host = os.environ.get('PUBSUB_EMULATOR_HOST', '')
+    pubsub_emulator_host = os.environ.get('PUBSUB_EMULATOR_HOST')
     if pubsub_emulator_host:
         publish_base_url = 'http://' + pubsub_emulator_host
         validate_certificate = False

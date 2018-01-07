@@ -173,7 +173,7 @@ def handle_create_user(user_id):
         verify_payload = urllib.urlencode({
             'secret': conf.recaptcha_secret_key,
             'response': recaptcha_response,
-            'remoteip': os.environ.get('REMOTE_ADDR', '')
+            'remoteip': os.environ.get('REMOTE_ADDR')
         })
         verify_url = 'https://www.google.com/recaptcha/api/siteverify'
         verify_response = urlfetch.fetch(

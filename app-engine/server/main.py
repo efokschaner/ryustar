@@ -208,6 +208,10 @@ class CommitVoteResult(object):
 
 @ndb.transactional(xg=True)
 def commit_vote(user_id, choice, level_key):
+    # confirm user_id is valid
+    maybe_user = User.get_by_id(user_id)
+    if not maybe_user:
+        return CommitVoteResult(('No user found for id {}'.format(user_id), 400))
     # confirm level id is current
     cur_level = get_current_level()
     if cur_level is None:

@@ -1,6 +1,6 @@
 <template>
   <div class="voting">
-    <img src="src/assets/ryukahr_logo.png" class="ryulogo">
+    <img src="../assets/ryukahr_logo.png" class="ryulogo">
     <div v-if="noLevelInProgress">
       <h2>No Level</h2>
       <p>Looks like Ryukahr is not playing a level at the moment</p>
@@ -36,11 +36,11 @@
         <h2 class="current-level-header">Vote on the level: {{currentLevel.name_ish }}</h2>
         <div class="votes-container">
           <div class="votes-item">
-            <img src="src/assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('star')"/>
+            <img src="../assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('star')"/>
             <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
           </div>
           <div class="votes-item">
-            <img src="src/assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('garbage')"/>
+            <img src="../assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('garbage')"/>
             <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default {
 @import 'https://fonts.googleapis.com/css?family=Bowlby+One+SC';
 .voting {
   height: 100vh;
-  background-image: url("/src/assets/wallpaper.png");
+  background-image: url("../assets/wallpaper.png");
   background-repeat:no-repeat;
   background-size:cover;
   font-family: 'Bowlby One SC', Helvetica, sans-serif;

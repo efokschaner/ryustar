@@ -20,8 +20,6 @@ docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 
 gcloud docker -- push ${WEBSOCKET_CONTAINER_IMAGE}
 
-gcloud beta pubsub topics delete level-updates-topic || echo "Deleting topic that is already deleted is expected to fail"
-
 gcloud beta pubsub topics create ryustar-io-endpoints-topic || echo "Creating topic that already exists is expected to fail"
 
 gcloud app deploy --quiet app-engine/server/queue.yaml

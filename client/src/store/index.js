@@ -69,9 +69,8 @@ function updateLerp ({commit, state}) {
 }
 
 function setCurrentLevel (state, newCurrentLevel) {
-  // if the current level changes, current vote is null, counts are 0, stop lerping
+  // if the current level changes, counts are 0, stop lerping
   if (!state.currentLevel || !newCurrentLevel || state.currentLevel.key !== newCurrentLevel.key) {
-    state.currentVote = null
     state.currentLevelVotesDisplayValues.star = 0
     state.currentLevelVotesDisplayValues.garbage = 0
     activeLerp = null
@@ -85,6 +84,11 @@ function setCurrentLevel (state, newCurrentLevel) {
         garbage: state.currentLevelVotesDisplayValues.garbage
       }
     }
+  }
+  // Updates can be out of order but if current level is not matching the current vote
+  // Then we wipe current vote
+  if (!newCurrentLevel || !state.currentVote || newCurrentLevel.key !== state.currentVote.level_key) {
+    state.currentVote = null
   }
   state.currentLevel = newCurrentLevel
   state.hasSetCurrentLevel = true

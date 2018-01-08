@@ -128,7 +128,7 @@ export default {
         return { hasConsent: true }
       }
       try {
-        await new Promise((resolve) => {
+        return await new Promise((resolve) => {
           this.captchaConsentResolveCallback = resolve
         })
       } finally {

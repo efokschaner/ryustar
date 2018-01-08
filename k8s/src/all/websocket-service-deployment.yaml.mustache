@@ -17,6 +17,7 @@ spec:
       containers:
       - name: ryustar-websocket-service
         image: {{ &websocket-service-container-image }}
+        imagePullPolicy: Always
         env:
         - name: LISTEN_PORT
           value: "{{ websocket-service-container-listen-port }}"

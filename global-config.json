@@ -1,22 +1,23 @@
 {
   "base": {
     "websocket-service-container-listen-port": 9090,
-    "websocket-service-service-listen-port": 9091
+    "websocket-service-service-listen-port": 9091,
+    "websocket-service-container-image": "gcr.io/studious-osprey-189923/websocket-service:latest"
   },
   "minikube": {
-    "websocket-service-container-image": "websocket-service:local-dev",
     "env-var-pusub-emulator-host-key": "PUBSUB_EMULATOR_HOST",
     "env-var-pusub-emulator-host-value": "gcloud-pubsub-service:9002",
     "env-var-gcloud-project-key": "GCLOUD_PROJECT",
     "env-var-gcloud-project-value": "None",
-    "websocket-service-deployment-replicas": 1
+    "websocket-service-deployment-replicas": 1,
+    "websocket-service-image-pull-policy": "IfNotPresent"
   },
   "gcloud": {
-    "websocket-service-container-image": "gcr.io/studious-osprey-189923/websocket-service:latest",
     "env-var-pusub-emulator-host-key": "NO_PUBSUB_EMULATOR_HOST",
     "env-var-pusub-emulator-host-value": "",
     "env-var-gcloud-project-key": "GCLOUD_PROJECT",
     "env-var-gcloud-project-value": "studious-osprey-189923",
-    "websocket-service-deployment-replicas": 2
+    "websocket-service-deployment-replicas": 2,
+    "websocket-service-image-pull-policy": "Always"
   }
 }

@@ -47,7 +47,7 @@ export function initWebsocketForStore (store) {
           store.commit('setWebSocketHasError', false)
         }
         websocket.onclose = function (evt) {
-          console.error(`WebSocket connection to ${websocket.url} closed. Reason: ${evt.reason}. Code: ${evt.code}`)
+          console.error(`WebSocket connection to '${websocket.url}' closed. Reason: '${evt.reason}'. Code: ${evt.code}`)
           store.commit('setWebSocketHasError', true)
         }
       }

@@ -56,8 +56,17 @@ class WebSocketBroadCastServer {
   }
 
   shutDown () {
+    this.wsServer.connections.forEach(function (connection) {
+      connection.close(1001, 'websocket-service is shutting down')
+    })
     this.wsServer.shutDown()
-    this.httpServer.close()
+    return new Promise(function (resolve, reject) {
+      this.httpServer.close(resolve)
+      setTimeout(
+        () => reject(new Error('Timeout shutting down WebSocketBroadCastServer')),
+        15000
+      )
+    })
   }
 
   _handleWebsocketUpgradeRequest (request) {
@@ -70,7 +79,7 @@ class WebSocketBroadCastServer {
     wsConnection.on('message', function (message) {
       // For now we're not expecting any client-to-server messages
       // If we receive one, assume the client is misbehaving and close the connection
-      wsConnection.close()
+      wsConnection.close(1003, 'unexpected c2s message')
     })
 
     wsConnection.on('close', function (reasonCode, description) {
@@ -101,9 +110,10 @@ async function main () {
     // from gcloud pubsub. Of course this is not guaranteed to work and so we should implement a
     // cron to clean up those subscriptions somehow.
     logger.info('Received signal. Shutting down.')
-    server.shutDown()
-    await subscription.close()
-    await subscription.delete()
+    await Promise.all([
+      server.shutDown(),
+      subscription.close().then(() => subscription.delete())
+    ])
   }
 
   process.on('SIGINT', handleShutdown)

@@ -249,7 +249,6 @@ def commit_vote(user_id, choice, level_key):
 
 @app.route('/api/vote', methods=['POST'])
 def handle_vote():
-    logging.debug('DOING THE OTHER THING')
     user_id = request.form.get('user_id')
     if not user_id:
         return 'Missing user_id', 400

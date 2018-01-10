@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-
-from datetime import datetime
 import json
+import random
+import time
 import uuid
 
 import gevent
@@ -10,19 +9,41 @@ import ws4py.client.geventclient
 
 
 class UserWithAccount(TaskSet):
+    def on_start(self):
+        # Client creates account when user chooses to vote
+        # So always perform a vote immediately when entering this state
+        self.vote()
+
     @task(1)
     def exit(self):
         self.parent.schedule_task(self.parent.exit)
         self.interrupt()
 
-    @task(40)
+    @task(30)
     def just_hang_out(self):
         pass
 
-    @task(10)
+    @task(5)
     def vote(self):
-        # TODO IMPLEMENT
-        pass
+        if not self.locust.user_state.current_level:
+            return
+        if self.locust.user_state.current_vote:
+            target_choice = 'garbage' if self.locust.user_state.current_vote.get('choice') == 'star' else 'star'
+        else:
+            # intentionally bias towards a vote of 'star', we want to mimic the behaviour of a level with high amounts
+            # of agreement because each sharded counter has its own load capacity and so this will stress the counter
+            # more than a 50-50 split
+            target_choice = 'star' if random.random() < 0.95 else 'garbage'
+        vote_response = self.client.post(
+            '/api/vote',
+            {
+                'user_id': self.locust.user_state.id,
+                'choice': target_choice,
+                'level_key': self.locust.user_state.current_level['key']
+            }
+        )
+        if vote_response.status_code == 200:
+            self.locust.user_state.current_vote = vote_response.json()
 
 
 class UserOnSite(TaskSet):
@@ -82,12 +103,16 @@ class UserState(object):
         self.current_vote = None
 
 
+class UnexpectedWebsocketCloseError(Exception):
+    pass
+
+
 class RyuStarWebsocketClient(object):
     def __init__(self, url, user_state):
         self.url = url
         self.user_state = user_state
         self.stop_requested = False
-        self.ws = ws4py.client.geventclient.WebSocketClient(self.url)
+        self.ws = None
         self.greenlet = gevent.spawn(self.run_thread)
 
     def close(self):
@@ -95,46 +120,51 @@ class RyuStarWebsocketClient(object):
         self.ws.close(code=1001)
         gevent.with_timeout(10, gevent.joinall, [self.greenlet], raise_error=True)
 
+    def run_one_websocket_connection(self):
+        first_message = True
+        if self.ws:
+            self.ws.close(code=1001)
+        self.ws = ws4py.client.geventclient.WebSocketClient(self.url)
+        self.ws.connect()
+        while not self.stop_requested:
+            m = self.ws.receive()
+            if m is not None:
+                self.process_message(m)
+                # Process before logging the first success
+                if first_message:
+                    events.request_success.fire(
+                        request_type="websocket",
+                        name=self.url,
+                        response_time=0,
+                        response_length=len(m.data)
+                    )
+                    first_message = False
+            else:
+                if not self.stop_requested:
+                    raise UnexpectedWebsocketCloseError()
+
     def run_thread(self):
-        try:
-            first_message = True
-            self.ws.connect()
-            while not self.stop_requested:
-                m = self.ws.receive()
-                if m is not None:
-                    self.process_message(m)
-                    # Process before logging the first success
-                    if first_message:
-                        events.request_success.fire(
-                            request_type="websocket",
-                            name=self.url,
-                            response_time=0,
-                            response_length=len(m.data)
-                        )
-                        first_message = False
-                else:
-                    if not self.stop_requested:
-                        events.request_failure.fire(
-                            request_type="websocket",
-                            name=self.url,
-                            response_time=0,
-                            exception='unexpected_websocket_close_error'
-                        )
-                    break
-        except Exception as e:
-            events.request_failure.fire(
-                request_type="websocket",
-                name=self.url,
-                response_time=0,
-                exception=e
-            )
-            raise
+        while not self.stop_requested:
+            try:
+                self.run_one_websocket_connection()
+            except Exception as e:
+                events.request_failure.fire(
+                    request_type="websocket",
+                    name=self.url,
+                    response_time=0,
+                    exception=e
+                )
+            if not self.stop_requested:
+                # This is a dumber, more aggressive reconnect loop than in production
+                # but isn't that what load tests are for? :P
+                time.sleep(random.random() * 20)
 
     def process_message(self, m):
         message = json.loads(m.data)
         if message['url'] == '/api/level/current':
-            self.user_state.current_level
-
+            self.user_state.current_level = json.loads(message['body'])
+            if self.user_state.current_vote and (self.user_state.current_vote['level_key'] != self.user_state.current_level['key']):
+                self.user_state.current_vote = None
 
 
 class RyuStarUser(HttpLocust):
@@ -146,6 +176,8 @@ class RyuStarUser(HttpLocust):
         super(RyuStarUser, self).__init__(*args, **kwargs)
         self.user_state = None
         self.ws_client = None
+        # This is like a finally clause for the entire Locust to ensure its websocket client is shutdown
+        gevent.getcurrent().link(self.on_greenlet_completion)
 
     def connect_ws_client(self, url):
         self.ws_client = RyuStarWebsocketClient(url, self.user_state)
@@ -161,4 +193,7 @@ class RyuStarUser(HttpLocust):
         # out how to do that yet
         self.close_ws_client()
         self.user_state = UserState()
+
+    def on_greenlet_completion(self, greenlet):
+        self.close_ws_client()
 

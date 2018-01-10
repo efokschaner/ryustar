@@ -19,3 +19,4 @@
   - Disabled
   - Probably should write down instructions on safely switching between in light of clients + caching
 - Maybe allow votes to go through for recently finished level?
+- Add datetime updated to GET current level. Compare to locustio client time to create rough "latency" metric

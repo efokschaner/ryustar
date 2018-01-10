@@ -3,7 +3,14 @@
 ## Notes on cluster size
 
 Based on some very scientific reading of blog posts, I predict we may be able to get on the order of 1000 locust users per core.
-Each locust worker is single threaded so distribute them 1 per core
+Each locust worker is single threaded so distribute them 1 per core.
+
+### Spotting overloaded load generator
+We need to be careful that the load generator itself does not become overloaded which can produce inaccurate load test results.
+To avoid this we should:
+ - Monitor CPU and Memory usage on load generator machines to avoid capping out (80% rule of thumb?)
+ - Run a non load generating client as a control (could even be from dev machine) to monitor the request latency metrics,
+   and ensure the non-load generating machine isn't seeing request metrics that are drastically different to the swarm.
 
 ## Local run
 

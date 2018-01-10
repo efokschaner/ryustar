@@ -112,12 +112,14 @@ class UserVote(FancyModel):
     def get_key(cls, user_id, level_key):
         return ndb.Key(UserVote, '{}-{}'.format(level_key.urlsafe(), user_id))
 
-
-def get_current_vote(user_id):
-    cur_level = get_current_level()
+def get_current_vote_given_current_level(user_id, cur_level):
     if cur_level is None:
         return None
     return UserVote.get_key(user_id, cur_level.key).get()
+
+
+def get_current_vote(user_id):
+    return get_current_vote_given_current_level(get_current_level())
 
 
 app = Flask(__name__)
@@ -213,7 +215,7 @@ def commit_vote_transact(
         cur_level,
         cur_level_star_votes_counter,
         cur_level_garbage_votes_counter):
-    prior_vote = get_current_vote(user_id)
+    prior_vote = get_current_vote_given_current_level(user_id, cur_level)
     if prior_vote is not None:
         prior_vote_choice = prior_vote.choice
         if prior_vote_choice == choice:

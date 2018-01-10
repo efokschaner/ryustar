@@ -207,6 +207,36 @@ class CommitVoteResult(object):
 
 
 @ndb.transactional(xg=True)
+def commit_vote_transact(
+        user_id,
+        choice,
+        cur_level,
+        cur_level_star_votes_counter,
+        cur_level_garbage_votes_counter):
+    prior_vote = get_current_vote(user_id)
+    if prior_vote is not None:
+        prior_vote_choice = prior_vote.choice
+        if prior_vote_choice == choice:
+            return CommitVoteResult(jsonify(prior_vote.to_dict()))
+        new_vote = prior_vote
+    else:
+        prior_vote_choice = None
+        new_vote = UserVote.create(user_id, cur_level.key)
+    new_vote.choice = choice
+    new_vote.put()
+    if choice == 'star':
+        cur_level_star_votes_counter.increment()
+    elif choice == 'garbage':
+        cur_level_garbage_votes_counter.increment()
+    else:
+        raise AssertionError('Should not be possible to reach here with invalid choice {}'.format(choice))
+    if prior_vote_choice == 'star':
+        cur_level_star_votes_counter.decrement()
+    elif prior_vote_choice == 'garbage':
+        cur_level_garbage_votes_counter.decrement()
+    return CommitVoteResult(handle_get_current_vote(user_id), counts_need_update=True)
+
+
 def commit_vote(user_id, choice, level_key):
     # confirm user_id is valid
     maybe_user = User.get_by_id(user_id)
@@ -222,29 +252,12 @@ def commit_vote(user_id, choice, level_key):
                 level_key.urlsafe(),
                 cur_level.key.urlsafe()),
             400))
-    prior_vote = get_current_vote(user_id)
-    if prior_vote is not None:
-        prior_vote_choice = prior_vote.choice
-        if prior_vote_choice == choice:
-            return CommitVoteResult(jsonify(prior_vote.to_dict()))
-        new_vote = prior_vote
-    else:
-        prior_vote_choice = None
-        new_vote = UserVote.create(user_id, level_key)
-    new_vote.choice = choice
-    new_vote.put()
-    if choice == 'star':
-        cur_level.star_votes_counter_key.get().increment()
-    elif choice == 'garbage':
-        cur_level.garbage_votes_counter_key.get().increment()
-    else:
-        raise AssertionError('Should not be possible to reach here with invalid choice {}'.format(choice))
-    if prior_vote_choice == 'star':
-        cur_level.star_votes_counter_key.get().decrement()
-    elif prior_vote_choice == 'garbage':
-        cur_level.garbage_votes_counter_key.get().decrement()
-    counts_need_update = True
-    return CommitVoteResult(handle_get_current_vote(user_id), True)
+    return commit_vote_transact(
+        user_id,
+        choice,
+        cur_level,
+        cur_level.star_votes_counter_key.get(),
+        cur_level.garbage_votes_counter_key.get())
 
 
 @app.route('/api/vote', methods=['POST'])

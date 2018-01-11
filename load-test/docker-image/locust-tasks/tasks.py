@@ -188,9 +188,7 @@ class RyuStarUser(HttpLocust):
         self.ws_client = None
 
     def become_new_user(self):
-        # In theory we should clear HttpLocust's session here but seeing
-        # as RyuStar is not using cookies for its user logic I'm not gonna figure
-        # out how to do that yet
+        self.client.cookies.clear()
         self.close_ws_client()
         self.user_state = UserState()
 

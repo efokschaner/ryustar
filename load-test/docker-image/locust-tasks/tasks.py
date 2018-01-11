@@ -1,11 +1,11 @@
-import json
 import random
-import time
+import sys
 import uuid
 
 import gevent
 from locust import events, HttpLocust, TaskSet, task
-import ws4py.client.geventclient
+
+from ws import RyuStarReconnectingWebsocketClient
 
 
 class UserWithAccount(TaskSet):
@@ -30,10 +30,7 @@ class UserWithAccount(TaskSet):
         if self.locust.user_state.current_vote:
             target_choice = 'garbage' if self.locust.user_state.current_vote.get('choice') == 'star' else 'star'
         else:
-            # intentionally bias towards a vote of 'star', we want to mimic the behaviour of a level with high amounts
-            # of agreement because each sharded counter has its own load capacity and so this will stress the counter
-            # more than a 50-50 split
-            target_choice = 'star' if random.random() < 0.95 else 'garbage'
+            target_choice = 'star' if random.random() < 0.5 else 'garbage'
         vote_response = self.client.post(
             '/api/vote',
             {
@@ -103,70 +100,6 @@ class UserState(object):
         self.current_vote = None
 
 
-class UnexpectedWebsocketCloseError(Exception):
-    pass
-
-
-class RyuStarWebsocketClient(object):
-    def __init__(self, url, user_state):
-        self.url = url
-        self.user_state = user_state
-        self.stop_requested = False
-        self.ws = None
-        self.greenlet = gevent.spawn(self.run_thread)
-
-    def close(self):
-        self.stop_requested = True
-        self.ws.close(code=1001)
-        gevent.with_timeout(10, gevent.joinall, [self.greenlet], raise_error=True)
-
-    def run_one_websocket_connection(self):
-        first_message = True
-        if self.ws:
-            self.ws.close(code=1001)
-        self.ws = ws4py.client.geventclient.WebSocketClient(self.url)
-        self.ws.connect()
-        while not self.stop_requested:
-            m = self.ws.receive()
-            if m is not None:
-                self.process_message(m)
-                # Process before logging the first success
-                if first_message:
-                    events.request_success.fire(
-                        request_type="websocket",
-                        name=self.url,
-                        response_time=0,
-                        response_length=len(m.data)
-                    )
-                    first_message = False
-            else:
-                if not self.stop_requested:
-                    raise UnexpectedWebsocketCloseError()
-
-    def run_thread(self):
-        while not self.stop_requested:
-            try:
-                self.run_one_websocket_connection()
-            except Exception as e:
-                events.request_failure.fire(
-                    request_type="websocket",
-                    name=self.url,
-                    response_time=0,
-                    exception=e
-                )
-            if not self.stop_requested:
-                # This is a dumber, more aggressive reconnect loop than in production
-                # but isn't that what load tests are for? :P
-                time.sleep(random.random() * 20)
-
-    def process_message(self, m):
-        message = json.loads(m.data)
-        if message['url'] == '/api/level/current':
-            self.user_state.current_level = json.loads(message['body'])
-            if self.user_state.current_vote and (self.user_state.current_vote['level_key'] != self.user_state.current_level['key']):
-                self.user_state.current_vote = None
-
-
 class RyuStarUser(HttpLocust):
     task_set = RyuStarUserTaskSet
     min_wait = 2000
@@ -180,7 +113,7 @@ class RyuStarUser(HttpLocust):
         gevent.getcurrent().link(self.on_greenlet_completion)
 
     def connect_ws_client(self, url):
-        self.ws_client = RyuStarWebsocketClient(url, self.user_state)
+        self.ws_client = RyuStarReconnectingWebsocketClient(url, self.user_state, self.record_exception)
 
     def close_ws_client(self):
         if self.ws_client:
@@ -195,3 +128,5 @@ class RyuStarUser(HttpLocust):
     def on_greenlet_completion(self, greenlet):
         self.close_ws_client()
 
+    def record_exception(self, e):
+        events.locust_error.fire(locust_instance=self, exception=e, tb=sys.exc_info()[2])

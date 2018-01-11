@@ -14,6 +14,16 @@ spec:
       labels:
         app: ryustar-websocket-service-app
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - ryustar-websocket-service-app
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: ryustar-websocket-service
         image: {{ &websocket-service-container-image }}

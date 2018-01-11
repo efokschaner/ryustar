@@ -237,7 +237,7 @@ def commit_vote_transact(
         cur_level_star_votes_counter.decrement()
     elif prior_vote_choice == 'garbage':
         cur_level_garbage_votes_counter.decrement()
-    return CommitVoteResult(handle_get_current_vote(user_id), counts_need_update=True)
+    return CommitVoteResult(jsonify(new_vote.to_dict()), counts_need_update=True)
 
 
 def commit_vote(user_id, choice, level_key):

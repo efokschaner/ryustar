@@ -60,7 +60,6 @@ yarn run dev
 ``` bash
 ./deploy.sh
 ```
-There will be some prompts.
 
 ## Appendix
 

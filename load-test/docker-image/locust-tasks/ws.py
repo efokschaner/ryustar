@@ -62,10 +62,10 @@ class RyuStarReconnectingWebsocketClient(object):
                         first_message = False
                 else:
                     if not self.stop_requested:
-                        raise UnexpectedWebsocketCloseError(
-                            'Code: {}. Reason: {}'.format(
-                                self.ws.close_code,
-                                self.ws.close_reason))
+                        message = 'UnexpectedWebsocketCloseError: Code: {}. Reason: {}'.format(
+                            self.ws.close_code,
+                            self.ws.close_reason)
+                        raise UnexpectedWebsocketCloseError(message)
         finally:
             try:
                 self._close_ws()

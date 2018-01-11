@@ -60,7 +60,7 @@ class WebSocketBroadCastServer {
       connection.close(1001, 'websocket-service is shutting down')
     })
     this.wsServer.shutDown()
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       this.httpServer.close(resolve)
       setTimeout(
         () => reject(new Error('Timeout shutting down WebSocketBroadCastServer')),

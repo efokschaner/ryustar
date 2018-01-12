@@ -92,5 +92,7 @@ class RyuStarReconnectingWebsocketClient(object):
         message = json.loads(m.data)
         if message['url'] == '/api/level/current':
             self.user_state.current_level = json.loads(message['body'])
-            if self.user_state.current_vote and (self.user_state.current_vote['level_key'] != self.user_state.current_level['key']):
+            if (not self.user_state.current_vote
+                    or not self.user_state.current_level
+                    or self.user_state.current_vote['level_key'] != self.user_state.current_level['key']):
                 self.user_state.current_vote = None

@@ -46,7 +46,7 @@ class ShardedCounter(FancyModel):
         shard.count += 1
         shard.put()
         # Memcache increment does nothing if the name is not a key in memcache
-        memcache.incr(self._get_memcache_key())
+        ndb.get_context().call_on_commit(lambda: memcache.incr(self._get_memcache_key()))
 
     @ndb.transactional
     def decrement(self):
@@ -54,7 +54,7 @@ class ShardedCounter(FancyModel):
         shard.count -= 1
         shard.put()
         # Memcache decrement does nothing if the name is not a key in memcache
-        memcache.decr(self._get_memcache_key())
+        ndb.get_context().call_on_commit(lambda: memcache.decr(self._get_memcache_key()))
 
     def _get_memcache_key(self):
         return 'ShardedCounter-{}'.format(self.key.id())

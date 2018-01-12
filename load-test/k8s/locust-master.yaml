@@ -23,7 +23,6 @@ spec:
   selector:
     name: locust
     role: master
-  type: LoadBalancer
 ---
 kind: ReplicationController
 apiVersion: v1
@@ -46,23 +45,23 @@ spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: name
-                operator: In
-                values:
-                - locust
-            topologyKey: "kubernetes.io/hostname"
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                  - locust
+              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: locust
           image: gcr.io/studious-osprey-189923/locust-tasks:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: LOCUST_MODE
-              key: LOCUST_MODE
               value: master
             - name: TARGET_HOST
-              key: TARGET_HOST
               value: https://www.ryustar.io
           ports:
             - name: loc-master-web

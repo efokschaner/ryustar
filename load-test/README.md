@@ -19,6 +19,10 @@ To avoid this we should:
 ## Minikiube run
 
     ./deploy_minikube
+    # Then in a separate shell
+    kubectl --context=minikube port-forward $(kubectl --context=minikube get pod -l name=locust,role=master -o template --template="{{(index .items 0).metadata.name}}") 38089:8089
+
+Then open in a browser: http://127.0.0.1:38089
 
 ## GKE Deploy
 

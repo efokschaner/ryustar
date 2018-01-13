@@ -3,6 +3,7 @@
 ## Notes on cluster size
 
 Based on some very scientific reading of blog posts, I predict we may be able to get on the order of 1000 locust users per core.
+Based on the inital actual load test run, we were able to get 2000 users simulated on a n1-standard-1 machine. We may have been coming close to the limit but I'm not sure as I didn't control too carefully.
 Each locust worker is single threaded so distribute them 1 per core.
 
 ### Spotting overloaded load generator
@@ -28,6 +29,7 @@ Then open in a browser: http://127.0.0.1:38089
 
 First create the cluster using the `gcloud` command as shown below. Using pre-emptible VMs which are in `beta`
 
+    # TODO figure out the --addons= syntax for excluding dashboard etc as we dont need it really in this cluster
     gcloud beta container clusters create ryustar-load-generator-cluster-0 --cluster-version=1.8.5-gke.0 --addons= --disk-size=10 --machine-type=n1-standard-1 --num-nodes=1 --zone=us-central1-a --preemptible
 
 This will also create a new `context` for you in `kubectl config`.

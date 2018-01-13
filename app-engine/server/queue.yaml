@@ -2,7 +2,7 @@
 # Possibly from the "default" service or the lexically first service ...
 # https://groups.google.com/forum/#!topic/google-appengine/ONM-D805ADc
 # Therefore it lives in here ...
-total_storage_limit: 1M
+total_storage_limit: 100M
 queue:
 - name: publish-endpoint-queue
   mode: push
@@ -12,4 +12,3 @@ queue:
   retry_parameters:
     task_retry_limit: 1
     task_age_limit: 1m
-

@@ -63,6 +63,19 @@ yarn run dev
 
 ## Appendix
 
+### Modifying reCAPTCHA settings in production
+
+#### When increasing the validation level (going in the direction: 'disabled' -> 'production')
+- You should change the `client_recaptcha_mode` first.
+- If done via datastore admin, flush the entity from memcache.
+- Allow it a couple of minutes to propagate.
+- Then change the server level.
+#### When decreasing the validation level
+- You must do the opposite and change the server first
+- If done via datastore admin, flush the entity from memcache.
+- Server propagation should be almost immediate, so you can now change the client.
+
+
 ### Updating app-engine vendored pip dependencies
 Pip does not support freezing a vendored dir of libs which makes maintaining the requirements.txt a pain
 One workaround is to create a virtualenv just for re-jigger-ing dependencies and then freezing it,

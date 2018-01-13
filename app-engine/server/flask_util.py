@@ -1,7 +1,7 @@
 from functools import wraps
 
 from werkzeug.routing import RequestRedirect, MethodNotAllowed, NotFound
-from flask import make_response
+from flask import jsonify, make_response
 
 
 def add_response_headers(headers={}):
@@ -44,3 +44,26 @@ def get_view_function(app, url, method='GET'):
     except KeyError:
         # no view is associated with the endpoint
         return None
+
+
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        return {
+            'status': self.status_code,
+            'message': self.message,
+            'payload': self.payload
+        }
+
+    def to_response(self):
+        response = jsonify(self.to_dict())
+        response.status_code = self.status_code
+        return response

@@ -13,7 +13,7 @@
             badge="inline"
             size="invisible"
             theme="dark"
-            :sitekey="config.recaptcha_site_key"
+            :sitekey="recaptchaSiteKey"
             @verify="onCaptchaVerify"
             @expired="onCaptchaExpired">
         </vue-recaptcha>
@@ -100,7 +100,9 @@ export default {
       'currentLevelVotesDisplayValues'
     ]),
     ...mapGetters([
-      'noLevelInProgress'
+      'noLevelInProgress',
+      'recaptchaEnabled',
+      'recaptchaSiteKey'
     ])
   },
   methods: {
@@ -124,7 +126,7 @@ export default {
       if (this.currentUser) {
         return { hasConsent: true }
       }
-      if (!this.config.client_recaptcha_enabled) {
+      if (!this.recaptchaEnabled) {
         return { hasConsent: true }
       }
       try {

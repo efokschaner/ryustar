@@ -10,7 +10,7 @@ from google.appengine.api import urlfetch, users
 from google.appengine.ext import ndb
 
 import config
-from flask_util import cache_for_seconds, get_view_function
+from flask_util import cache_for_seconds, get_view_function, InvalidUsage
 from ndb_util import FancyModel
 import pubsub
 from sharded_counter import ShardedCounter
@@ -165,40 +165,49 @@ def handle_get_user(user_id):
     return jsonify(user)
 
 
+def verify_recaptcha_response(form, remoteip):
+    conf = config.PersistentConfig.get_singleton()
+    if conf.server_recaptcha_mode == 'production':
+        recaptcha_secret_key = conf.recaptcha_production_secret_key
+    elif conf.server_recaptcha_mode == 'test':
+        recaptcha_secret_key = conf.recaptcha_test_secret_key
+    else:
+        # No captcha enabled, implicitly valid
+        return None
+    recaptcha_response = form.get('g-recaptcha-response')
+    if not recaptcha_response:
+        raise InvalidUsage('Missing g-recaptcha-response form parameter')
+    verify_payload = urllib.urlencode({
+        'secret': recaptcha_secret_key,
+        'response': recaptcha_response,
+        'remoteip': remoteip
+    })
+    verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+    verify_response = urlfetch.fetch(
+        verify_url,
+        deadline=10, # seconds
+        method=urlfetch.POST,
+        payload=verify_payload,
+        headers={ 'Content-Type': 'application/x-www-form-urlencoded' },
+        validate_certificate=True
+    )
+    if (not verify_response) or verify_response.status_code != 200:
+        error_message = 'HTTP {} returned from POST to {}\n response={}'.format(
+            verify_response.status_code,
+            verify_url,
+            repr(verify_response.__dict__)
+        )
+        raise Exception(error_message)
+    verify_response_payload = json.loads(verify_response.content)
+    if not verify_response_payload['success']:
+        logging.info('Failed recaptcha: {}'.format(verify_response.content))
+        raise InvalidUsage('Recaptcha did not pass verification')
+    return None
+
+
 @app.route('/api/user/<user_id>/create', methods=['POST'])
 def handle_create_user(user_id):
-    # first verify the captcha if needed:
-    conf = config.PersistentConfig.get_singleton()
-    if conf.server_recaptcha_enabled:
-        recaptcha_response = request.form.get('g-recaptcha-response')
-        if not recaptcha_response:
-            return 'Missing g-recaptcha-response', 400
-        verify_payload = urllib.urlencode({
-            'secret': conf.recaptcha_secret_key,
-            'response': recaptcha_response,
-            'remoteip': os.environ.get('REMOTE_ADDR')
-        })
-        verify_url = 'https://www.google.com/recaptcha/api/siteverify'
-        verify_response = urlfetch.fetch(
-            verify_url,
-            deadline=10, # seconds
-            method=urlfetch.POST,
-            payload=verify_payload,
-            headers={ 'Content-Type': 'application/x-www-form-urlencoded' },
-            validate_certificate=True
-        )
-        if (not verify_response) or verify_response.status_code != 200:
-            error_message = 'HTTP {} returned from POST to {}\n response={}'.format(
-                verify_response.status_code,
-                verify_url,
-                repr(verify_response.__dict__)
-            )
-            raise Exception(error_message)
-        verify_response_payload = json.loads(verify_response.content)
-        if not verify_response_payload['success']:
-            logging.info('Failed recaptcha: {}'.format(verify_response.content))
-            return 'Recaptcha did not pass verification', 400
-
+    verify_recaptcha_response(request.form, os.environ.get('REMOTE_ADDR'))
     user = User.get_or_insert(user_id)
     return jsonify(user.to_client_model())
 
@@ -327,6 +336,16 @@ def handle_increase_current_level_total_counter_shards():
     return ('', 200)
 
 
+@app.route('/api/admin/touch-persistent-config', methods=['POST'])
+def handle_touch_persistent_config():
+    @ndb.transactional
+    def touch():
+        config.PersistentConfig.get_singleton().put()
+    touch()
+    pubsub.schedule_publish_endpoint('/api/config')
+    return ('', 200)
+
+
 @app.route('/api/admin/environ')
 def handle_get_environ():
     def _sanitize(val):
@@ -338,8 +357,17 @@ def handle_get_environ():
 
 
 @app.errorhandler(500)
-def server_error(e):
+def handle_server_error(e):
     # Log the error and stacktrace.
     logging.exception('An error occurred during a request.')
-    return 'An internal error occurred.', 500
+    response = jsonify({
+        'status': 500,
+        'message': 'An internal error occurred.'
+    })
+    response.status_code = 500
+    return response
 
+
+@app.errorhandler(InvalidUsage)
+def handle_invalid_usage(invalid_usage_error):
+    return invalid_usage_error.to_response()

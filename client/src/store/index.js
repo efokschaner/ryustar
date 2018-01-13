@@ -43,6 +43,21 @@ let state = {
 let getters = {
   noLevelInProgress (state) {
     return state.hasSetCurrentLevel && !state.currentLevel
+  },
+  recaptchaEnabled (state) {
+    return state.config && (state.config.client_recaptcha_mode === 'production' || state.config.client_recaptcha_mode === 'test')
+  },
+  recaptchaSiteKey (state) {
+    if (!state.config) {
+      return null
+    }
+    if (state.config.client_recaptcha_mode === 'production') {
+      return state.config.recaptcha_production_site_key
+    }
+    if (state.config.client_recaptcha_mode === 'test') {
+      return state.config.recaptcha_test_site_key
+    }
+    return null
   }
 }
 

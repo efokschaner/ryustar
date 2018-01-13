@@ -17,6 +17,11 @@
         <input type="submit" class="btn btn-default" value="Change num counter shards">
       </form>
     </div>
+    <div class="form-wrapper">
+      <form v-on:submit.prevent="touchConfig">
+        <input type="submit" class="btn btn-default" value="Touch Config (invalidate memcache + broadcast to clients)">
+      </form>
+    </div>
     <div class="working" v-if="working">
       Working...
     </div>
@@ -99,6 +104,25 @@ export default {
         if (!response.ok) {
           let errorText = await response.text()
           throw new Error(`HTTP ${response.status} from /api/admin/increase-current-level-total-counter-shards : ${errorText}`)
+        }
+      } catch (err) {
+        this.error = err.toString()
+      } finally {
+        this.working = false
+      }
+    },
+    async touchConfig () {
+      this.error = null
+      this.working = true
+      let fetchOptions = {
+        method: 'POST',
+        credentials: 'same-origin'
+      }
+      try {
+        let response = await fetch('/api/admin/touch-persistent-config', fetchOptions)
+        if (!response.ok) {
+          let errorText = await response.text()
+          throw new Error(`HTTP ${response.status} from /api/admin/touch-persistent-config : ${errorText}`)
         }
       } catch (err) {
         this.error = err.toString()

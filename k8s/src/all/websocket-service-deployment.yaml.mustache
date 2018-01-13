@@ -14,9 +14,20 @@ spec:
       labels:
         app: ryustar-websocket-service-app
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - ryustar-websocket-service-app
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: ryustar-websocket-service
         image: {{ &websocket-service-container-image }}
+        imagePullPolicy: {{ websocket-service-image-pull-policy }}
         env:
         - name: LISTEN_PORT
           value: "{{ websocket-service-container-listen-port }}"
@@ -32,3 +43,7 @@ spec:
             port: {{ websocket-service-container-listen-port }}
           initialDelaySeconds: 5
           timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 0.1
+            memory: 100M

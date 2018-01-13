@@ -60,9 +60,21 @@ yarn run dev
 ``` bash
 ./deploy.sh
 ```
-There will be some prompts.
 
 ## Appendix
+
+### Modifying reCAPTCHA settings in production
+
+#### When increasing the validation level (going in the direction: 'disabled' -> 'production')
+- You should change the `client_recaptcha_mode` first.
+- If done via datastore admin, flush the entity from memcache.
+- Allow it a couple of minutes to propagate.
+- Then change the server level.
+#### When decreasing the validation level
+- You must do the opposite and change the server first
+- If done via datastore admin, flush the entity from memcache.
+- Server propagation should be almost immediate, so you can now change the client.
+
 
 ### Updating app-engine vendored pip dependencies
 Pip does not support freezing a vendored dir of libs which makes maintaining the requirements.txt a pain
@@ -99,8 +111,7 @@ Get minikube up and running to use the rest of this readme:
 ### GKE notes
 Manually creating nodepool with necessary pubsub auth scope:
 
-    gcloud container node-pools create node-pool-0 --cluster=ryustar-cluster-0 --disk-size=10 --enable-autoupgrade --machine-type=f1-micro --num-nodes=3 --zone=us-central1-a --scopes=gke-default,pubsub
-
+    gcloud container node-pools create node-pool-0 --cluster=ryustar-cluster-0 --disk-size=20 --enable-autoupgrade --machine-type=g1-small --num-nodes=2 --zone=us-central1-a --scopes=gke-default,pubsub
 
 Before any other clusterrole configs can be made:
 

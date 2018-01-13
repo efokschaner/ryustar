@@ -7,29 +7,34 @@
     <style>
       body {
         margin: 0;
+        font-family: 'Avenir', Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     </style>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111883794-1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'UA-111883794-1');
-      window.addEventListener('error', function (evt) {
-        gtag('event', 'exception', {
-          description: [evt.error.name, evt.filename, evt.lineno, evt.message].join(': '),
-          fatal: false
-        });
-      });
-      window.addEventListener('unhandledrejection', function (evt) {
-        var reason = evt.reason;
-        gtag('event', 'exception', {
-          description: ['UnhandledRejection-' + reason.name, '', '', reason.message || JSON.stringify(reason)].join(': '),
-          fatal: false
-        });
-      });
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-111883794-1');
+window.addEventListener('error', function (evt) {
+  gtag('event', 'exception', {
+    description: [evt.error.name, evt.filename, evt.lineno, evt.message].join(': '),
+    fatal: false
+  });
+});
+window.addEventListener('unhandledrejection', function (evt) {
+  var reason = evt.reason;
+  gtag('event', 'exception', {
+    description: ['UnhandledRejection-' + reason.name, '', '', reason.message || JSON.stringify(reason)].join(': '),
+    fatal: false
+  });
+});
     </script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://www.google.com/recaptcha/api.js?onload=vueRecaptchaApiLoaded&render=explicit" async defer></script>
   </head>
   <body>
     <div id="app"></div>

@@ -11,7 +11,7 @@ class _CounterShard(FancyModel):
 
 
 class ShardedCounter(FancyModel):
-    keys = ndb.KeyProperty(kind=_CounterShard, repeated=True)
+    num_shards = ndb.IntegerProperty(default=0)
 
     @classmethod
     def create(cls, num_shards):
@@ -21,10 +21,7 @@ class ShardedCounter(FancyModel):
         return counter
 
     def increase_total_shards(self, num_total_shards):
-        new_shards = []
-        for i in xrange(num_total_shards - len(self.keys)):
-            new_shards.append(_CounterShard())
-        self.keys.extend(ndb.put_multi(new_shards))
+        self.num_shards = max(self.num_shards, num_total_shards)
         self.put()
 
     def get_count_fast(self):
@@ -35,27 +32,40 @@ class ShardedCounter(FancyModel):
 
     def get_count_exact(self):
         total = 0
-        for shard in ndb.get_multi(self.keys):
-            total += shard.count
-        memcache.add(self._get_memcache_key(), total, 30)
+        for shard in ndb.get_multi(self._get_all_keys()):
+            if shard is not None:
+                total += shard.count
+        memcache.add(self._get_memcache_key(), total, 120)
         return total
 
     @ndb.transactional
     def increment(self):
-        shard = random.choice(self.keys).get()
+        shard = _CounterShard.get_or_insert(self._get_random_shard_key_name())
         shard.count += 1
         shard.put()
         # Memcache increment does nothing if the name is not a key in memcache
-        memcache.incr(self._get_memcache_key())
+        ndb.get_context().call_on_commit(lambda: memcache.incr(self._get_memcache_key()))
 
     @ndb.transactional
     def decrement(self):
-        shard = random.choice(self.keys).get()
+        shard = _CounterShard.get_or_insert(self._get_random_shard_key_name())
         shard.count -= 1
         shard.put()
         # Memcache decrement does nothing if the name is not a key in memcache
-        memcache.decr(self._get_memcache_key())
+        ndb.get_context().call_on_commit(lambda: memcache.decr(self._get_memcache_key()))
 
     def _get_memcache_key(self):
         return 'ShardedCounter-{}'.format(self.key.id())
 
+    def _get_shard_key_name(self, index):
+        return '{}-{}'.format(self.key.id(), index)
+
+    def _get_shard_key(self, index):
+        return ndb.Key(_CounterShard, self._get_shard_key_name(index))
+
+    def _get_random_shard_key_name(self):
+        random_index = random.randint(0, self.num_shards - 1)
+        return self._get_shard_key_name(random_index)
+
+    def _get_all_keys(self):
+        return [self._get_shard_key(i) for i in xrange(0, self.num_shards)]

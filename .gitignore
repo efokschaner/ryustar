@@ -6,3 +6,6 @@
 *.ntvs*
 *.njsproj
 *.sln
+
+# Generated python files
+*.pyc

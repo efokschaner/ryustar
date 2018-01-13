@@ -1,0 +1,41 @@
+kind: ReplicationController
+apiVersion: v1
+metadata:
+  name: locust-worker
+  labels:
+    name: locust
+    role: worker
+spec:
+  replicas: 1
+  selector:
+    name: locust
+    role: worker
+  template:
+    metadata:
+      labels:
+        name: locust
+        role: worker
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                  - locust
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: locust
+          image: gcr.io/studious-osprey-189923/locust-tasks:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOCUST_MODE
+              value: worker
+            - name: LOCUST_MASTER
+              value: locust-master
+            - name: TARGET_HOST
+              value: https://www.ryustar.io

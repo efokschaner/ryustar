@@ -6,16 +6,18 @@
 
 <script>
 export default {
-  name: 'app'
+  name: 'app',
+  created () {
+    return this.$store.dispatch('fetchConfig').catch((err) => {
+      this.$toasted.global.genericError()
+      throw err
+    })
+  }
 }
 </script>
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+
 }
 </style>

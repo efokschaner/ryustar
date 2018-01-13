@@ -3,9 +3,6 @@ set -o nounset
 set -o errexit
 set -o verbose
 
-# Deletes all files and folders that match the .gitignore (uncommited stuff that is tracked is let alone)
-git clean -f -d -X
-
 # Builds
 k8s/build.sh
 
@@ -23,7 +20,7 @@ docker build -t ${WEBSOCKET_CONTAINER_IMAGE} websocket-service
 
 gcloud docker -- push ${WEBSOCKET_CONTAINER_IMAGE}
 
-gcloud beta pubsub topics create level-updates-topic || echo "Creating topic that already exists is expected to fail"
+gcloud beta pubsub topics create ryustar-io-endpoints-topic || echo "Creating topic that already exists is expected to fail"
 
 gcloud app deploy --quiet app-engine/server/queue.yaml
 

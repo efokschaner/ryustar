@@ -1,5 +1,6 @@
 import base64
 import datetime
+import logging
 import os
 
 import flask.json
@@ -9,24 +10,24 @@ from google.appengine.api import app_identity, urlfetch
 from unique_tasks import add_task_once_in_current_interval
 
 
-def schedule_push_current_level():
+def schedule_publish_endpoint(url):
     try:
         refresh_interval_seconds = 5
         add_task_once_in_current_interval(
-            base_name = 'update-and-broadcast-level-counts-task',
+            base_name = url,
             interval_seconds = refresh_interval_seconds,
-            queue_name = 'update-and-broadcast-level-counts-queue',
-            url = '/api/admin/update-and-broadcast-level-counts',
-            params = {},
+            queue_name = 'publish-endpoint-queue',
+            url = '/api/admin/publish-endpoint',
+            params = {'url': url},
             eta = datetime.datetime.utcnow() + datetime.timedelta(seconds=refresh_interval_seconds)
         )
     except Exception:
         # Caller doesn't need to know what went wrong in here:
-        logging.exception('Error while adding update counts task')
+        logging.exception('Error while adding publish task')
 
 
 def publish(topic_name, message_data_object):
-    pubsub_emulator_host = os.environ.get('PUBSUB_EMULATOR_HOST', '')
+    pubsub_emulator_host = os.environ.get('PUBSUB_EMULATOR_HOST')
     if pubsub_emulator_host:
         publish_base_url = 'http://' + pubsub_emulator_host
         validate_certificate = False

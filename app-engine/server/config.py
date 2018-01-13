@@ -15,7 +15,7 @@ RECAPTCHA_TEST_SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
 
 class PersistentConfig(FancyModel):
     updated_timestamp = ndb.DateTimeProperty(auto_now=True)
-    initial_num_shards_for_vote_counters = ndb.IntegerProperty(default=128)
+    initial_num_shards_for_vote_counters = ndb.IntegerProperty(default=256)
     websocket_url = ndb.StringProperty(
         default='wss://gke.ryustar.io/websocket' if IS_PUBLIC_ENVIRONMENT else 'ws://gke.ryustar.invalid/websocket')
 

@@ -58,6 +58,16 @@ let getters = {
       return state.config.recaptcha_test_site_key
     }
     return null
+  },
+  hasVoted: (state) => (choice) => {
+    return state.currentVote && (state.currentVote.choice === choice)
+  },
+  votesPercent: (state) => (choice) => {
+    let totalVotes = state.currentLevelVotesDisplayValues.star + state.currentLevelVotesDisplayValues.garbage
+    if (totalVotes === 0) {
+      return 0
+    }
+    return Math.round(100 * state.currentLevelVotesDisplayValues[choice] / totalVotes)
   }
 }
 

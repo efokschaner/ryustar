@@ -35,14 +35,12 @@
       <div v-else>
         <h2 class="current-level-header">Vote on the level: {{currentLevel.name_ish }}</h2>
         <div class="votes-container">
-          <div class="votes-item">
-            <img src="../assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('star')"/>
-            <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
-          </div>
-          <div class="votes-item">
-            <img src="../assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('garbage')"/>
-            <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
-          </div>
+          <vote-item choice="star" @chosen="submitVote('star')">
+            <img src="../assets/star_level_256.png"/>
+          </vote-item>
+          <vote-item choice="garbage" @chosen="submitVote('garbage')">
+            <img src="../assets/trash_button_256.png"/>
+          </vote-item>
         </div>
       </div>
     </div>
@@ -55,9 +53,10 @@
 <script>
 import { mapActions, mapGetters, mapState } from 'vuex'
 import VueRecaptcha from 'vue-recaptcha'
+import VoteItem from './VoteItem'
 export default {
   name: 'Voting',
-  components: { VueRecaptcha },
+  components: { VueRecaptcha, VoteItem },
   created () {
     return Promise.all([
       this.fetchCurrentLevel(),
@@ -75,23 +74,6 @@ export default {
     }
   },
   computed: {
-    hasVoted (choice) {
-      return this.currentVote && (this.currentVote.choice === choice)
-    },
-    starVotesPercent () {
-      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
-      if (totalVotes === 0) {
-        return 0
-      }
-      return Math.round(100 * this.currentLevelVotesDisplayValues.star / totalVotes)
-    },
-    garbageVotesPercent () {
-      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
-      if (totalVotes === 0) {
-        return 0
-      }
-      return Math.round(100 * this.currentLevelVotesDisplayValues.garbage / totalVotes)
-    },
     ...mapState([
       'config',
       'currentUser',
@@ -200,57 +182,5 @@ a {
   flex-wrap: wrap;
   justify-content: center;
   align-items: baseline;
-}
-.votes-item {
-  padding: 10px;
-}
-.vote-image {
-  border-radius: 15px;
-  background: rgb(56, 60, 77);
-  padding: 20px;
-  width: 200px;
-  height: 200px;
-  cursor: pointer;
-  box-shadow: 3px 10px;
-  color:#be3535;
-}
-.votes-item-text {
-  font-size: 120%;
-}
-@keyframes bounceIn {
-  from, 20%, 40%, 60%, 80%, to {
-    animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
-  }
-
-  0% {
-    opacity: 0;
-    transform: scale3d(.3, .3, .3);
-  }
-
-  20% {
-    transform: scale3d(1.1, 1.1, 1.1);
-  }
-
-  40% {
-    transform: scale3d(.9, .9, .9);
-  }
-
-  60% {
-    opacity: 1;
-    transform: scale3d(1.03, 1.03, 1.03);
-  }
-
-  80% {
-    transform: scale3d(.97, .97, .97);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale3d(1, 1, 1);
-  }
-}
-.bounceIn {
-  animation-duration: .75s;
-  animation-name: bounceIn;
 }
 </style>

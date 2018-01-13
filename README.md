@@ -41,14 +41,16 @@ Now try http://www.ryustar.invalid/ and http://gae-admin.ryustar.invalid/ in a b
 ### Client
 
 This runs webpack dev server on your local machine.
-Service calls are routed to the `www.ryustar.invalid` domain by the webpack proxy rules.
-
-In principle you could change the proxy to point to the production backend and bypass all the local server setup.
+By default, API calls are routed to the domain `www.ryustar.invalid` by the webpack proxy rules.
+You could change the proxy to point to the production backend and bypass all the local server setup by using an `API_PROXY_TARGET` env var.
 
 ``` bash
 cd client
 yarn install
+# For local dev API
 yarn run dev
+# Or for prod API:
+API_PROXY_TARGET="https://www.ryustar.io" yarn run dev
 ```
 
 ## Deployment

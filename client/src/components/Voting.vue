@@ -10,7 +10,7 @@
       <div class="votes-container">
         <div class="votes-item">
           <img src="src/assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('star')"/> 
-          <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
+          <p class="votes-item-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
         </div>
         <div class="votes-item">
           <img src="src/assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="performVote('garbage')"/>
@@ -97,7 +97,7 @@ a {
   color: #be3535;
 }
 .current-level-header {
-  font-size: 7;
+  font-size: 200%;
   color: "#000000";
 }
 .votes-container{
@@ -120,7 +120,7 @@ a {
   color:#be3535;
 }
 .votes-item-text {
-  font-size: 4
+  font-size: 120%;
 }
 @keyframes bounceIn {
   from, 20%, 40%, 60%, 80%, to {

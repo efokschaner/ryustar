@@ -28,9 +28,25 @@ Then open in a browser: http://127.0.0.1:38089
 
 First create the cluster using the `gcloud` command as shown below. Using pre-emptible VMs which are in `beta`
 
-    gcloud beta container clusters create CLUSTER-NAME --cluster-version=1.8.4-gke.1 --addons= --disk-size=10G --machine-type=n1-standard-1 --num-nodes=NUM_WORKERS_PLUS_ONE --zone=us-central1-a --preemptible
+    gcloud beta container clusters create ryustar-load-generator-cluster-0 --cluster-version=1.8.5-gke.0 --addons= --disk-size=10 --machine-type=n1-standard-1 --num-nodes=1 --zone=us-central1-a --preemptible
 
-**Note:** the output from the `gcloud container clusters create` command will contain the specific `kubectl config` command to execute for your platform/project.
+This will also create a new `context` for you in `kubectl config`.
+
+Deploy the load test pods:
+
+    load-test/deploy_gke.sh
+
+Open ports to the locust UI:
+
+    # Then in a separate shell
+    kubectl --context=gke_studious-osprey-189923_us-central1-a_ryustar-load-generator-cluster-0 port-forward $(kubectl --context=gke_studious-osprey-189923_us-central1-a_ryustar-load-generator-cluster-0 get pod -l name=locust,role=master -o template --template="{{(index .items 0).metadata.name}}") 38089:8089
+
+Then open in a browser: http://127.0.0.1:38089
+
+Then delete the cluster once done:
+
+    gcloud container clusters delete ryustar-load-generator-cluster-0 --zone=us-central1-a
+
 
 ### Deploy locust
 

@@ -93,7 +93,7 @@ function setCurrentLevel (state, newCurrentLevel) {
   if (newCurrentLevel) {
     activeLerp = {
       startTimeMS: Date.now(),
-      durationMS: state.currentLevel ? 1500 : 1000, // Lerp faster if this is the first update
+      durationMS: 1000,
       startValues: {
         star: state.currentLevelVotesDisplayValues.star,
         garbage: state.currentLevelVotesDisplayValues.garbage

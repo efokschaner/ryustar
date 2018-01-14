@@ -47,32 +47,60 @@ $edge-width: 6px;
   align-content: start;
   justify-items: stretch;
   align-items: stretch;
+
+  .cell-top-left {
+  }
+  .cell-top-middle  {
+      background-color: $light-edge;
+  }
+  .cell-top-right {
+  }
+  .cell-middle-left {
+      background-color: $light-edge;
+  }
+  .cell-middle-middle {
+      background-color: $center;
+  }
+  .cell-middle-right {
+      background-color: $dark-edge;
+  }
+  .cell-bottom-left {
+      background-color: $dark-edge;
+  }
+  .cell-bottom-middle {
+      background-color: $dark-edge;
+  }
+  .cell-bottom-right {
+      background-color: $dark-edge;
+  }
+
+  &:active {
+    .cell-top-left {
+    }
+    .cell-top-middle  {
+        background-color: $dark-edge;
+    }
+    .cell-top-right {
+    }
+    .cell-middle-left {
+        background-color: $dark-edge;
+    }
+    .cell-middle-middle {
+        background-color: $center;
+    }
+    .cell-middle-right {
+        background-color: $light-edge;
+    }
+    .cell-bottom-left {
+        background-color: $light-edge;
+    }
+    .cell-bottom-middle {
+        background-color: $light-edge;
+    }
+    .cell-bottom-right {
+      background-color: $light-edge;
+    }
+  }
 }
-.cell-top-left {
-    
-}
-.cell-top-middle {
-    background-color: $light-edge;
-}
-.cell-top-right {
-    
-}
-.cell-middle-left {
-    background-color: $light-edge;
-}
-.cell-middle-middle {
-    background-color: $center;
-}
-.cell-middle-right {
-    background-color: $dark-edge;
-}
-.cell-bottom-left {
-    background-color: $dark-edge;
-}
-.cell-bottom-middle {
-    background-color: $dark-edge;
-}
-.cell-bottom-right {
-    background-color: $dark-edge;
-}
+
 </style>

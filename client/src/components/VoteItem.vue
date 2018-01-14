@@ -1,8 +1,11 @@
 <template>
   <div class="vote-item">
-    <div class="vote-image bounceIn" v-on:click.prevent="$emit('chosen')">
-      <slot>
-      </slot>
+    <div class="vote-button bounceIn" v-on:click.prevent="$emit('chosen')">
+      <mario-block>
+        <slot>
+        </slot>
+        
+      </mario-block>
     </div>
     <p class="vote-item-text">{{currentLevelVotesDisplayValues[this.choice]}} votes ({{ votesPercent(choice) }}%)</p>
   </div>
@@ -10,9 +13,12 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from 'vuex'
+import MarioBlock from './MarioBlock'
 export default {
   name: 'VoteItem',
-  components: {},
+  components: {
+    MarioBlock
+  },
   props: [
     'choice'
   ],
@@ -38,19 +44,12 @@ export default {
 }
 </script>
 <style scoped>
+@import '../base.scss';
 .vote-item {
-  padding: 10px;
+  margin: 0 15px;
 }
-.vote-image {
-  border-radius: 15px;
-  background: rgb(56, 60, 77);
-  padding: 20px;
+.vote-button {
   cursor: pointer;
-  box-shadow: 3px 10px;
-  color:#be3535;
-}
-.vote-item-text {
-  font-size: 120%;
 }
 @keyframes bounceIn {
   from, 20%, 40%, 60%, 80%, to {

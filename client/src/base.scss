@@ -1,0 +1,15 @@
+$text-color: rgb(0, 0, 11);
+$text-highlight-color: rgb(255, 182, 55);
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Bowlby One SC', Helvetica, sans-serif;
+  letter-spacing: 0.09em;
+  color: $text-highlight-color;
+  text-shadow: 3px 3px 3px $text-color;
+}
+a {
+  color: $text-highlight-color;
+}
+p {
+    color: $text-color;
+}

@@ -40,10 +40,12 @@
           <h2>{{ currentLevel.name_ish }}</h2>
           <div class="votes-container">
             <vote-item choice="star" @chosen="submitVote('star')">
-              <img src="../assets/star_level_256.png"/>
+              <img src="../assets/star_icon.png"
+               class="star-image"/>
             </vote-item>
             <vote-item choice="garbage" @chosen="submitVote('garbage')">
-              <img src="../assets/trash_button_256.png"/>
+              <img src="../assets/trash_icon.png"
+                class="garbage-image"/>
             </vote-item>
           </div>
         </div>
@@ -162,9 +164,7 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
-
-$text-color: rgb(0, 0, 11);
-$text-highlight-color: rgb(255, 182, 55);
+@import '../base.scss';
 
 .voting-scene {
   min-height: 100vh;
@@ -176,7 +176,7 @@ $text-highlight-color: rgb(255, 182, 55);
   color: $text-color;
 }
 .voting-ui {
-  padding: 30px;
+  padding: 15px;
   max-width: 860px;
 }
 .logo {
@@ -186,21 +186,21 @@ $text-highlight-color: rgb(255, 182, 55);
   font-family: 'Bou College', Helvetica, sans-serif;
   font-size: 300%;
   padding: 0 10px;
+  &:hover {
+    cursor: default;
+  }
 }
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Bowlby One SC', Helvetica, sans-serif;
-  letter-spacing: 0.09em;
-  color: $text-highlight-color;
-  text-shadow: 3px 3px 3px $text-color;
-}
-a {
-  color: $text-highlight-color;
-}
-.votes-container{
+.votes-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: baseline;
+  align-items: stretch;
+}
+.star-image {
+  padding: 15px;
+}
+.garbage-image {
+  padding: 10px 0 0 0;
 }
 .ground-texture{
   height: 57px;

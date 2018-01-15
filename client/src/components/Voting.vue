@@ -41,13 +41,21 @@
           <h4>Now voting on:</h4>
           <h2>{{ currentLevel.name_ish }}</h2>
           <div class="votes-container">
-            <vote-item choice="star" @chosen="submitVote('star')">
+            <vote-item
+              class="votes-container-item"
+              choice="star"
+              hover-text="Star this level!"
+              @chosen="submitVote('star')">
               <img src="../assets/star_icon.png"
-               class="star-image"/>
+               class="vote-image"/>
             </vote-item>
-            <vote-item choice="garbage" @chosen="submitVote('garbage')">
+            <vote-item
+              class="votes-container-item"
+              choice="garbage"
+              hover-text="Get this garbage out of here!"
+              @chosen="submitVote('garbage')">
               <img src="../assets/trash_icon.png"
-                class="garbage-image"/>
+                class="vote-image"/>
             </vote-item>
           </div>
         </div>
@@ -177,7 +185,7 @@ export default {
 .voting-scene {
   min-height: 100vh;
   position: relative;
-  background: linear-gradient(rgb(63, 97, 233), rgba(63, 97, 233, 0.6));
+  background: linear-gradient(rgb(53, 87, 233), rgb(140, 159, 221));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -194,17 +202,17 @@ export default {
 .cloud0 {
   @extend .cloud;
   left: 5%;
-  top: 40%;
+  top: 380px;
 }
 .cloud1 {
   @extend .cloud;
-  right: 17%;
-  top: 22%;
+  right: 10%;
+  top: 38px;
 }
 .voting-ui {
   position: relative;
-  padding: 15px;
-  max-width: 860px;
+  padding: 10px;
+  max-width: 840px;
 }
 .logo {
   text-align: left;
@@ -223,12 +231,12 @@ export default {
   justify-content: center;
   align-items: stretch;
 }
-.star-image {
-  padding: 15px;
+.votes-container-item {
+  max-width: 30vw;
 }
-.garbage-image {
-  padding: 10px 0 0 0;
-  max-width: 120px;
+.vote-image {
+  object-fit: contain;
+  max-width: 100%;
 }
 .bottom-aligned-scene {
   width: 100%;
@@ -241,7 +249,7 @@ $pipe-height: 160px;
 }
 .pipe {
   position: absolute;
-  right: 10%;
+  right: 14%;
   bottom: 0;
   height: $pipe-height;
   width: $pipe-width;

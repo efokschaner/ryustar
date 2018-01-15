@@ -2,12 +2,19 @@
   <div class="vote-item">
     <div class="vote-button bounceIn" v-on:click.prevent="$emit('chosen')">
       <mario-block>
-        <slot>
-        </slot>
-        
+        <div class="block-content">
+          <div class="image-wrapper">
+            <slot>
+            </slot>
+          </div>
+          <div class="hover-text">{{hoverText}}</div>
+        </div>
       </mario-block>
     </div>
-    <p class="vote-item-text">{{currentLevelVotesDisplayValues[this.choice]}} votes ({{ votesPercent(choice) }}%)</p>
+    <div class="counter-container">
+      <h2 class="counter-stat">{{ currentLevelVotesDisplayValues[this.choice] }} votes</h2>
+      <h2 class="counter-stat">{{ votesPercent(choice) }}%</h2>
+    </div>
   </div>
 </template>
 
@@ -20,7 +27,8 @@ export default {
     MarioBlock
   },
   props: [
-    'choice'
+    'choice',
+    'hoverText'
   ],
   created () {
   },
@@ -43,13 +51,50 @@ export default {
   }
 }
 </script>
-<style scoped>
+<style lang="scss" scoped>
 @import '../base.scss';
 .vote-item {
   margin: 0 15px;
 }
 .vote-button {
   cursor: pointer;
+  &:hover {
+    .image-wrapper {
+      opacity: 0.4;
+    }
+    .hover-text {
+      opacity: 1;
+    }
+  }
+}
+.block-content {
+  position: relative;
+}
+.image-wrapper {
+   margin: 10px;
+}
+.hover-text {
+  opacity: 0;
+  font-size: 200%;
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.counter-container {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.counter-stat {
+  margin: 10px 0px;
 }
 @keyframes bounceIn {
   from, 20%, 40%, 60%, 80%, to {

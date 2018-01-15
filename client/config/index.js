@@ -13,7 +13,7 @@ module.exports = {
     proxyTable: [
       {
         context: ['/api/**', '/_ah/**'],
-        target: 'http://www.ryustar.invalid',
+        target: process.env.API_PROXY_TARGET || 'http://www.ryustar.invalid',
         changeOrigin: true
       }
     ],

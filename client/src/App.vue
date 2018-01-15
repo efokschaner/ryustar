@@ -16,8 +16,16 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+@import url('https://fonts.googleapis.com/css?family=Bowlby+One+SC|Ubuntu');
+@font-face {
+    font-family: 'Bou College';
+    src: url('./fonts/boucollege-webfont.woff2') format('woff2'),
+         url('./fonts/boucollege-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
 #app {
-
+  font-family: 'Ubuntu', Helvetica, sans-serif;
 }
 </style>

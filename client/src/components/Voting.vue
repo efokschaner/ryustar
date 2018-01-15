@@ -1,53 +1,76 @@
 <template>
-  <div class="voting">
-    <img src="../assets/ryukahr_logo.png" class="ryulogo">
-    <div v-if="noLevelInProgress">
-      <h2>No Level</h2>
-      <p>Looks like Ryukahr is not playing a level at the moment</p>
-    </div>
-    <div v-else-if="currentLevel">
-      <div v-if="captchaConsentResolveCallback">
-        <vue-recaptcha
-            style="display: none"
-            ref="invisibleRecaptcha"
-            badge="inline"
-            size="invisible"
-            theme="dark"
-            :sitekey="recaptchaSiteKey"
-            @verify="onCaptchaVerify"
-            @expired="onCaptchaExpired">
-        </vue-recaptcha>
-        <h3>This site uses Invisible ReCAPTCHA</h3>
-        <p>To make sure that votes aren't being submitted by robots,
-          this page uses Google's Invisible reCAPTCHA system for verifying that you are not a robot,
-          or not a robot lacking human intelligence at least!
-          reCAPTCHA works by "collecting hardware and software information,
-          such as device and application data and the results of integrity checks,
-          and sending that data to Google for analysis".
-          Your use of Invisible reCAPTCHA is subject to Google's
-          <a href="https://www.google.com/policies/privacy/">Privacy Policy</a> and
-          <a href="https://www.google.com/policies/terms/">Terms of Use</a>
-          Do you accept these terms, to continue with your vote?
-        </p>
-        <button @click="onRefusedCaptcha()">No thanks! I'll just spectate.</button>
-        <button @click="onConsentToCaptcha()">I accept these terms and wish to vote!</button>
+  <div class="voting-scene">
+    <div class="cloud0"></div>
+    <div class="cloud1"></div>
+    <div class="voting-ui">
+      <mario-block class="logo">
+        <!-- Hacky Kerning fix incoming -->
+        <span class="logo-text">RyuS<span style="letter-spacing: -4px;">t</span>ar.io</span>
+      </mario-block>
+      <div v-if="noLevelInProgress">
+        <h2>No Level</h2>
+        <p>Looks like Ryukahr is not playing a level at the moment</p>
       </div>
-      <div v-else>
-        <h2 class="current-level-header">Vote on the level: {{currentLevel.name_ish }}</h2>
-        <div class="votes-container">
-          <div class="votes-item">
-            <img src="../assets/star_level_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('star')"/>
-            <p class="votes-text">{{currentLevelVotesDisplayValues.star}} votes ({{ starVotesPercent }}%)</p>
-          </div>
-          <div class="votes-item">
-            <img src="../assets/trash_button_256.png" class="vote-image bounceIn" v-on:click.prevent="submitVote('garbage')"/>
-            <p class="votes-item-text">{{currentLevelVotesDisplayValues.garbage}} votes ({{ garbageVotesPercent }}%)</p>
+      <div v-else-if="currentLevel">
+        <div v-if="captchaConsentResolveCallback">
+          <vue-recaptcha
+              style="display: none"
+              ref="invisibleRecaptcha"
+              badge="inline"
+              size="invisible"
+              theme="dark"
+              :sitekey="recaptchaSiteKey"
+              @verify="onCaptchaVerify"
+              @expired="onCaptchaExpired">
+          </vue-recaptcha>
+          <h3>This site uses Invisible ReCAPTCHA</h3>
+          <p>To make sure that votes aren't being submitted by robots,
+            this page uses Google's Invisible reCAPTCHA system for verifying that you are not a robot &mdash;
+            or not a robot lacking human intelligence at least! &mdash;
+            reCAPTCHA works by "collecting hardware and software information,
+            such as device and application data and the results of integrity checks,
+            and sending that data to Google for analysis".
+            Your use of Invisible reCAPTCHA is subject to Google's
+            <a href="https://www.google.com/policies/privacy/">Privacy Policy</a> and
+            <a href="https://www.google.com/policies/terms/">Terms of Use</a>.</p>
+            <p>Do you accept these terms?</p>
+          <button @click="onRefusedCaptcha()">No thanks! I'll just spectate...</button>
+          <button @click="onConsentToCaptcha()">I accept these terms and wish to vote!</button>
+        </div>
+        <div v-else>
+          <h4>Now voting on:</h4>
+          <h2>{{ currentLevel.name_ish }}</h2>
+          <div class="votes-container">
+            <vote-item
+              class="votes-container-item"
+              choice="star"
+              hover-text="Star this level!"
+              @chosen="submitVote('star')">
+              <img src="../assets/star_icon.png"
+               class="vote-image"/>
+            </vote-item>
+            <vote-item
+              class="votes-container-item"
+              choice="garbage"
+              hover-text="Get this garbage out of here!"
+              @chosen="submitVote('garbage')">
+              <img src="../assets/trash_icon.png"
+                class="vote-image"/>
+            </vote-item>
           </div>
         </div>
       </div>
+      <div v-else>
+        <h2>Fetching level info ...</h2>
+      </div>
     </div>
-    <div v-else>
-      <h2>Fetching level info ...</h2>
+    <div class="bottom-aligned-scene">
+      <div class="pipe-wrapper">
+        <div class="pipe">
+      </div>
+      </div>
+      <div class="ground-texture">
+      </div>
     </div>
   </div>
 </template>
@@ -55,9 +78,15 @@
 <script>
 import { mapActions, mapGetters, mapState } from 'vuex'
 import VueRecaptcha from 'vue-recaptcha'
+import MarioBlock from './MarioBlock'
+import VoteItem from './VoteItem'
 export default {
   name: 'Voting',
-  components: { VueRecaptcha },
+  components: {
+    MarioBlock,
+    VueRecaptcha,
+    VoteItem
+  },
   created () {
     return Promise.all([
       this.fetchCurrentLevel(),
@@ -75,23 +104,6 @@ export default {
     }
   },
   computed: {
-    hasVoted (choice) {
-      return this.currentVote && (this.currentVote.choice === choice)
-    },
-    starVotesPercent () {
-      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
-      if (totalVotes === 0) {
-        return 0
-      }
-      return Math.round(100 * this.currentLevelVotesDisplayValues.star / totalVotes)
-    },
-    garbageVotesPercent () {
-      let totalVotes = this.currentLevelVotesDisplayValues.star + this.currentLevelVotesDisplayValues.garbage
-      if (totalVotes === 0) {
-        return 0
-      }
-      return Math.round(100 * this.currentLevelVotesDisplayValues.garbage / totalVotes)
-    },
     ...mapState([
       'config',
       'currentUser',
@@ -167,90 +179,86 @@ export default {
   }
 }
 </script>
-<style scoped>
-@import 'https://fonts.googleapis.com/css?family=Bowlby+One+SC';
-.voting {
-  height: 100vh;
-  background-image: url("../assets/wallpaper.png");
-  background-repeat:no-repeat;
-  background-size:cover;
-  font-family: 'Bowlby One SC', Helvetica, sans-serif;
-  text-align: center;
+<style lang="scss" scoped>
+@import '../base.scss';
+
+.voting-scene {
+  min-height: 100vh;
+  position: relative;
+  background: linear-gradient(rgb(53, 87, 233), rgb(140, 159, 221));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  color: $text-color;
 }
-h1, h2 {
-  text-shadow: 2px 2px 5px red;
+.cloud {
+  width: 155px;
+  height: 117px;
+  position: absolute;
+  background-image: url('../assets/cloud.png');
+  background-repeat: no-repeat;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+.cloud0 {
+  @extend .cloud;
+  left: 5%;
+  top: 380px;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+.cloud1 {
+  @extend .cloud;
+  right: 10%;
+  top: 38px;
 }
-a {
-  color: #be3535;
+.voting-ui {
+  position: relative;
+  padding: 10px;
+  max-width: 840px;
 }
-.current-level-header {
-  font-size: 7;
-  color: "#000000";
+.logo {
+  text-align: left;
 }
-.votes-container{
+.logo-text {
+  font-family: 'Bou College', Helvetica, sans-serif;
+  font-size: 300%;
+  padding: 0 10px;
+  &:hover {
+    cursor: default;
+  }
+}
+.votes-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: baseline;
+  align-items: stretch;
 }
-.votes-item {
-  padding: 10px;
+.votes-container-item {
+  max-width: 30vw;
 }
 .vote-image {
-  border-radius: 15px;
-  background: rgb(56, 60, 77);
-  padding: 20px;
-  width: 200px;
-  height: 200px;
-  cursor: pointer;
-  box-shadow: 3px 10px;
-  color:#be3535;
+  object-fit: contain;
+  max-width: 100%;
 }
-.votes-item-text {
-  font-size: 4
+.bottom-aligned-scene {
+  width: 100%;
 }
-@keyframes bounceIn {
-  from, 20%, 40%, 60%, 80%, to {
-    animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
-  }
-
-  0% {
-    opacity: 0;
-    transform: scale3d(.3, .3, .3);
-  }
-
-  20% {
-    transform: scale3d(1.1, 1.1, 1.1);
-  }
-
-  40% {
-    transform: scale3d(.9, .9, .9);
-  }
-
-  60% {
-    opacity: 1;
-    transform: scale3d(1.03, 1.03, 1.03);
-  }
-
-  80% {
-    transform: scale3d(.97, .97, .97);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale3d(1, 1, 1);
-  }
+$pipe-width: 154px;
+$pipe-height: 160px;
+.pipe-wrapper {
+  position: relative;
+  height: $pipe-height;
 }
-.bounceIn {
-  animation-duration: .75s;
-  animation-name: bounceIn;
+.pipe {
+  position: absolute;
+  right: 14%;
+  bottom: 0;
+  height: $pipe-height;
+  width: $pipe-width;
+  background-image: url('../assets/pipe.png');
+  background-repeat: no-repeat;
+}
+.ground-texture{
+  height: 57px;
+  background-image: url('../assets/floor.png');
+  background-repeat: repeat-x;
 }
 </style>

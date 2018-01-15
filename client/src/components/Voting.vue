@@ -1,5 +1,7 @@
 <template>
   <div class="voting-scene">
+    <div class="cloud0"></div>
+    <div class="cloud1"></div>
     <div class="voting-ui">
       <mario-block class="logo">
         <!-- Hacky Kerning fix incoming -->
@@ -54,7 +56,13 @@
         <h2>Fetching level info ...</h2>
       </div>
     </div>
-    <div class="ground-texture">
+    <div class="bottom-aligned-scene">
+      <div class="pipe-wrapper">
+        <div class="pipe">
+      </div>
+      </div>
+      <div class="ground-texture">
+      </div>
     </div>
   </div>
 </template>
@@ -168,6 +176,7 @@ export default {
 
 .voting-scene {
   min-height: 100vh;
+  position: relative;
   background: linear-gradient(rgb(63, 97, 233), rgba(63, 97, 233, 0.6));
   display: flex;
   flex-direction: column;
@@ -175,7 +184,25 @@ export default {
   justify-content: space-between;
   color: $text-color;
 }
+.cloud {
+  width: 155px;
+  height: 117px;
+  position: absolute;
+  background-image: url('../assets/cloud.png');
+  background-repeat: no-repeat;
+}
+.cloud0 {
+  @extend .cloud;
+  left: 5%;
+  top: 40%;
+}
+.cloud1 {
+  @extend .cloud;
+  right: 17%;
+  top: 22%;
+}
 .voting-ui {
+  position: relative;
   padding: 15px;
   max-width: 860px;
 }
@@ -201,10 +228,28 @@ export default {
 }
 .garbage-image {
   padding: 10px 0 0 0;
+  max-width: 120px;
+}
+.bottom-aligned-scene {
+  width: 100%;
+}
+$pipe-width: 154px;
+$pipe-height: 160px;
+.pipe-wrapper {
+  position: relative;
+  height: $pipe-height;
+}
+.pipe {
+  position: absolute;
+  right: 10%;
+  bottom: 0;
+  height: $pipe-height;
+  width: $pipe-width;
+  background-image: url('../assets/pipe.png');
+  background-repeat: no-repeat;
 }
 .ground-texture{
   height: 57px;
-  width: 100%;
   background-image: url('../assets/floor.png');
   background-repeat: repeat-x;
 }

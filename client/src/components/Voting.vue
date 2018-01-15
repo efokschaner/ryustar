@@ -3,7 +3,7 @@
     <div class="cloud0"></div>
     <div class="cloud1"></div>
     <div class="voting-ui">
-      <mario-block class="logo">
+      <mario-block class="logo" :isHit="logoIsHit" @click.native="logoIsHit = !logoIsHit">
         <!-- Hacky Kerning fix incoming -->
         <span class="logo-text">RyuS<span style="letter-spacing: -4px;">t</span>ar.io</span>
       </mario-block>
@@ -103,7 +103,8 @@ export default {
   },
   data () {
     return {
-      captchaConsentResolveCallback: null
+      captchaConsentResolveCallback: null,
+      logoIsHit: false
     }
   },
   computed: {
@@ -115,6 +116,7 @@ export default {
       'currentLevelVotesDisplayValues'
     ]),
     ...mapGetters([
+      'hasVoted',
       'noLevelInProgress',
       'recaptchaEnabled',
       'recaptchaSiteKey'
@@ -162,6 +164,9 @@ export default {
       }
     },
     async submitVote (choice) {
+      if (this.hasVoted(choice)) {
+        return
+      }
       try {
         await this.ensureUser()
         if (this.currentUser) {

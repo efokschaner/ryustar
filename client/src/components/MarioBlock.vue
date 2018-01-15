@@ -1,5 +1,5 @@
 <template>
-  <div class="grid">
+  <div :class="{ grid: !isHit, 'grid-hit': isHit }">
     <div class="cell-top-left"></div>
     <div class="cell-top-middle"></div>
     <div class="cell-top-right"></div>
@@ -18,9 +18,12 @@
 export default {
   name: 'MarioBlock',
   components: {},
-  props: [
-    'state'
-  ],
+  props: {
+    isHit: {
+      type: Boolean,
+      default: false
+    }
+  },
   created () {
   },
   data () {
@@ -37,9 +40,10 @@ export default {
 $light-edge: rgb(237, 115, 28);
 $dark-edge: rgb(0, 0, 11);
 $center: rgb(253, 206, 127);
+$center-hit: rgb(158,74,1);
 $edge-width: 6px;
 
-.grid {
+.grid-common {
   display: inline-grid;
   grid-template-rows: $edge-width 1fr $edge-width;
   grid-template-columns: $edge-width 1fr $edge-width;
@@ -47,6 +51,14 @@ $edge-width: 6px;
   align-content: start;
   justify-items: stretch;
   align-items: stretch;
+}
+
+.grid {
+  @extend .grid-common;
+
+  .cell-middle-middle {
+      background-color: $center;
+  }
 
   .cell-top-left {
   }
@@ -57,9 +69,6 @@ $edge-width: 6px;
   }
   .cell-middle-left {
       background-color: $light-edge;
-  }
-  .cell-middle-middle {
-      background-color: $center;
   }
   .cell-middle-right {
       background-color: $dark-edge;
@@ -85,9 +94,6 @@ $edge-width: 6px;
     .cell-middle-left {
         background-color: $dark-edge;
     }
-    .cell-middle-middle {
-        background-color: $center;
-    }
     .cell-middle-right {
         background-color: $light-edge;
     }
@@ -100,6 +106,37 @@ $edge-width: 6px;
     .cell-bottom-right {
       background-color: $light-edge;
     }
+  }
+}
+
+.grid-hit {
+  @extend .grid-common;
+  
+  .cell-middle-middle {
+    background-color: $center-hit;
+  }
+
+  .cell-top-left {
+  }
+  .cell-top-middle  {
+      background-color: $dark-edge;
+  }
+  .cell-top-right {
+  }
+  .cell-middle-left {
+      background-color: $dark-edge;
+  }
+  .cell-middle-right {
+      background-color: $dark-edge;
+  }
+  .cell-bottom-left {
+      background-color: $dark-edge;
+  }
+  .cell-bottom-middle {
+      background-color: $dark-edge;
+  }
+  .cell-bottom-right {
+      background-color: $dark-edge;
   }
 }
 

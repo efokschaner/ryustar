@@ -3,10 +3,17 @@
     <div class="cloud0"></div>
     <div class="cloud1"></div>
     <div class="voting-ui">
-      <mario-block class="logo" :isHit="logoIsHit" @click.native="logoIsHit = !logoIsHit">
-        <!-- Hacky Kerning fix incoming -->
-        <span class="logo-text">RyuS<span style="letter-spacing: -4px;">t</span>ar.io</span>
-      </mario-block>
+      <div class="top-row">
+        <mario-block class="logo" :isHit="logoIsHit" @click.native="logoIsHit = !logoIsHit">
+          <!-- Hacky Kerning fix incoming -->
+          <span class="logo-text">RyuS<span style="letter-spacing: -4px;">t</span>ar.io</span>
+        </mario-block>
+        <div
+            v-if="consecutiveWebSocketErrorCount >= 2"
+            class="material-icons sync-error"
+            title="The connection to the server is failing. The information on the page may be stale."
+          >sync_problem</div>
+      </div>
       <div v-if="noLevelInProgress">
         <h2>No Level</h2>
         <p>Looks like Ryukahr is not playing a level at the moment</p>
@@ -110,10 +117,12 @@ export default {
   computed: {
     ...mapState([
       'config',
+      'consecutiveWebSocketErrorCount',
       'currentUser',
       'currentLevel',
       'currentVote',
-      'currentLevelVotesDisplayValues'
+      'currentLevelVotesDisplayValues',
+      'webSocketIsConnected'
     ]),
     ...mapGetters([
       'hasVoted',
@@ -222,6 +231,12 @@ export default {
   padding: 10px;
   max-width: 840px;
 }
+.top-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
 .logo {
   text-align: left;
 }
@@ -232,6 +247,10 @@ export default {
   &:hover {
     cursor: default;
   }
+}
+.sync-error {
+  font-size: calc(50px + 1vw);
+  color: rgb(239, 30, 30);
 }
 .recaptcha-frame {
   background-color: rgba(221, 221, 221, 0.7);

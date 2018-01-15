@@ -44,10 +44,10 @@ new Vue({
 
 store.watch(
   function (state) {
-    return state.websocketHasError
+    return state.consecutiveWebSocketErrorCount
   },
-  function (websocketHasError) {
-    if (websocketHasError) {
+  function (consecutiveWebSocketErrorCount) {
+    if (consecutiveWebSocketErrorCount >= 2) {
       Vue.toasted.global.genericError(
         { message: 'The connection to the server is failing. The information on the page may be stale.' }
       )

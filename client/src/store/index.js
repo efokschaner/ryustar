@@ -33,7 +33,8 @@ let state = {
   currentLevel: null,
   hasSetCurrentLevel: false,
   currentVote: null,
-  websocketHasError: false,
+  webSocketIsConnected: false,
+  consecutiveWebSocketErrorCount: 0,
   currentLevelVotesDisplayValues: {
     star: 0,
     garbage: 0
@@ -145,8 +146,14 @@ let mutations = {
   setCurrentVote (state, newCurrentVote) {
     state.currentVote = newCurrentVote
   },
-  setWebSocketHasError (state, newWebSocketHasError) {
-    state.websocketHasError = newWebSocketHasError
+  setWebSocketIsConnected (state, newValue) {
+    state.webSocketIsConnected = newValue
+  },
+  incrementConsecutiveWebSocketErrorCount (state) {
+    state.consecutiveWebSocketErrorCount = Math.min(2, state.consecutiveWebSocketErrorCount + 1)
+  },
+  zeroConsecutiveWebSocketErrorCount (state) {
+    state.consecutiveWebSocketErrorCount = 0
   },
   setCurrentLevelVotesDisplayValues (state, newValues) {
     state.currentLevelVotesDisplayValues.star = Math.round(newValues.star)

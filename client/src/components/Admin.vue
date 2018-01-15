@@ -150,7 +150,7 @@ a {
   color: #42b983;
 }
 .admin {
-  margin-top: 60px;
+  margin: 60px;
 }
 .form-wrapper {
   padding: 5px

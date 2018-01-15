@@ -20,6 +20,7 @@ Vue.toasted.register('genericError',
     type: 'error',
     icon: 'error',
     position: 'bottom-center',
+    fullWidth: true,
     duration: 15000,
     theme: 'outline',
     action: {

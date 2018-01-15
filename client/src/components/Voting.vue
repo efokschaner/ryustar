@@ -179,7 +179,7 @@ export default {
       try {
         await this.ensureUser()
         if (this.currentUser) {
-          return this.performVote(choice)
+          return await this.performVote(choice)
         }
       } catch (err) {
         this.$toasted.global.genericError()

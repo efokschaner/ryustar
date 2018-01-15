@@ -44,11 +44,13 @@ export function initWebsocketForStore (store) {
           }
         }
         websocket.onopen = function () {
-          store.commit('setWebSocketHasError', false)
+          store.commit('zeroConsecutiveWebSocketErrorCount')
+          store.commit('setWebSocketIsConnected', true)
         }
         websocket.onclose = function (evt) {
           console.error(`WebSocket connection to '${websocket.url}' closed. Reason: '${evt.reason}'. Code: ${evt.code}`)
-          store.commit('setWebSocketHasError', true)
+          store.commit('setWebSocketIsConnected', false)
+          store.commit('incrementConsecutiveWebSocketErrorCount')
         }
       }
     }

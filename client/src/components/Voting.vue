@@ -13,29 +13,32 @@
       </div>
       <div v-else-if="currentLevel">
         <div v-if="captchaConsentResolveCallback">
-          <vue-recaptcha
-              style="display: none"
-              ref="invisibleRecaptcha"
-              badge="inline"
-              size="invisible"
-              theme="dark"
-              :sitekey="recaptchaSiteKey"
-              @verify="onCaptchaVerify"
-              @expired="onCaptchaExpired">
-          </vue-recaptcha>
-          <h3>This site uses Invisible ReCAPTCHA</h3>
-          <p>To make sure that votes aren't being submitted by robots,
-            this page uses Google's Invisible reCAPTCHA system for verifying that you are not a robot &mdash;
-            or not a robot lacking human intelligence at least! &mdash;
-            reCAPTCHA works by "collecting hardware and software information,
-            such as device and application data and the results of integrity checks,
-            and sending that data to Google for analysis".
-            Your use of Invisible reCAPTCHA is subject to Google's
-            <a href="https://www.google.com/policies/privacy/">Privacy Policy</a> and
-            <a href="https://www.google.com/policies/terms/">Terms of Use</a>.</p>
+          <div class="recaptcha-frame">
+            <vue-recaptcha
+                style="display: none"
+                ref="invisibleRecaptcha"
+                badge="inline"
+                size="invisible"
+                theme="dark"
+                :sitekey="recaptchaSiteKey"
+                @verify="onCaptchaVerify"
+                @expired="onCaptchaExpired">
+            </vue-recaptcha>
+            <h3>This site uses Invisible ReCAPTCHA</h3>
+            <p>To make sure that votes aren't being submitted by robots,
+              this page uses Google's Invisible reCAPTCHA system for verifying that you are not a robot &mdash;
+              or not a robot lacking human intelligence at least! &mdash;
+              reCAPTCHA works by "collecting hardware and software information,
+              such as device and application data and the results of integrity checks,
+              and sending that data to Google for analysis".
+              Your use of Invisible reCAPTCHA is subject to Google's
+              <a href="https://www.google.com/policies/privacy/">Privacy Policy</a> and
+              <a href="https://www.google.com/policies/terms/">Terms of Use</a>.
+            </p>
             <p>Do you accept these terms?</p>
-          <button @click="onRefusedCaptcha()">No thanks! I'll just spectate...</button>
-          <button @click="onConsentToCaptcha()">I accept these terms and wish to vote!</button>
+            <button class="reject-recaptcha-button" @click="onRefusedCaptcha()">No thanks! I'll just spectate...</button>
+            <button class="accept-recaptcha-button" @click="onConsentToCaptcha()">I accept these terms and wish to vote!</button>
+          </div>
         </div>
         <div v-else>
           <h4>Now voting on:</h4>
@@ -224,6 +227,29 @@ export default {
   &:hover {
     cursor: default;
   }
+}
+.recaptcha-frame {
+  background-color: rgba(221, 221, 221, 0.7);
+  border-radius: 8px;
+  padding: 0 8px;
+}
+.recaptcha-button {
+  font-size: 150%;
+  border-radius: 8px;
+  margin: 8px;
+  box-shadow: 1px 1px 1px 0px;
+}
+$reject-color:rgba(236, 42, 42, 0.8);
+.reject-recaptcha-button {
+  @extend .recaptcha-button;
+  background-color: $reject-color;
+  border-color: $reject-color;
+}
+$accept-color:rgba(34, 238, 34, 0.8);
+.accept-recaptcha-button {
+  @extend .recaptcha-button;
+  background-color: $accept-color;
+  border-color: $accept-color;
 }
 .votes-container {
   display: flex;

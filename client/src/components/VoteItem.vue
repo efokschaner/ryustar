@@ -1,12 +1,19 @@
 <template>
   <div class="vote-item">
-    <div class="vote-button bounceIn" v-on:click.prevent="$emit('chosen')">
-      <mario-block>
+    <div 
+        :class="{
+          'vote-button': true,
+          bounceIn: true,
+          'provide-hover': !hasVoted(choice)
+        }"
+        v-on:click.prevent="$emit('chosen')">
+      <mario-block :isHit="hasVoted(choice)">
         <div class="block-content">
           <div class="image-wrapper">
             <slot>
             </slot>
           </div>
+          <div v-if="hasVoted(choice)" class="material-icons voted-check">check_circle</div>
           <div class="hover-text">{{hoverText}}</div>
         </div>
       </mario-block>
@@ -58,7 +65,9 @@ export default {
 }
 .vote-button {
   cursor: pointer;
-  &:hover {
+}
+@media (hover:hover) {
+  .provide-hover.vote-button:hover {
     .image-wrapper {
       opacity: 0.4;
     }
@@ -72,6 +81,12 @@ export default {
 }
 .image-wrapper {
    margin: 10px;
+}
+.voted-check {
+  position: absolute;
+  top: 0%;
+  right: 2%;
+  font-size: calc(24px + 2vw);
 }
 .hover-text {
   opacity: 0;

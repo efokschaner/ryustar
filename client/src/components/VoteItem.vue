@@ -58,13 +58,15 @@ export default {
 }
 .vote-button {
   cursor: pointer;
-  &:hover {
-    .image-wrapper {
-      opacity: 0.4;
-    }
-    .hover-text {
-      opacity: 1;
-    }
+  @media (hover:hover) {
+    &:hover {
+      .image-wrapper {
+        opacity: 0.4;
+      }
+      .hover-text {
+        opacity: 1;
+      }
+    } 
   }
 }
 .block-content {

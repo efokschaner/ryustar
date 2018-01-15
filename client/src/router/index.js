@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Voting from '@/components/Voting'
 import Admin from '@/components/Admin'
+import UiDev from '@/components/UiDev'
 
 const NotFoundComponent = { template: `
 <div>
@@ -24,9 +25,14 @@ export default new Router({
       component: Voting
     },
     {
-      path: '/admin/',
+      path: '/admin',
       name: 'Admin',
       component: Admin
+    },
+    {
+      path: '/uidev',
+      name: 'UiDev',
+      component: UiDev
     },
     {
       path: '*',

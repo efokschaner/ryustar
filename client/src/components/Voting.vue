@@ -62,7 +62,7 @@
             <vote-item
               class="votes-container-item"
               choice="garbage"
-              hover-text="Get this garbage out of here!"
+              hover-text="Get that garbage outta here!"
               @chosen="submitVote('garbage')">
               <img src="../assets/trash_icon.png"
                 class="vote-image"/>

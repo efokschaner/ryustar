@@ -11,7 +11,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "node-sass": "^4.7.2",
+    "node-sass": "^4.13.1",
     "reconnecting-websocket": "^3.2.2",
     "sass-loader": "^6.0.6",
     "vue": "^2.5.2",
